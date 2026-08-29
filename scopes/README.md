@@ -9,6 +9,18 @@ blocking tasks that cap the score regardless of how well everything else went.
 | **Usability** | 25 | Can a stranger reach the payoff from a cold clone? | [usability.md](usability.md) |
 | **Feasibility** | 20 | Was it actually built, by these people, in this window? | [feasibility.md](feasibility.md) |
 
+## Reading the task IDs
+
+`V-…`, `U-…` and `F-…` are verbatim source keys, not descriptive names, and are deliberately
+left unrenamed — they are the join key between these contracts, the
+[builder](../builder/README.md), the [run order](../evaluator/README.md) and every filled
+scorecard, and renaming them would desync all four from the source.
+
+They are opaque on their own, so they get exactly one decoder: the requirement column of
+[../evaluator/scorecard-TEMPLATE.md](../evaluator/scorecard-TEMPLATE.md), which lists all 35 IDs
+with their plain-language requirement. Cite an ID anywhere else and gloss it inline; do not
+start a second index.
+
 ## What makes these contracts rather than checklists
 
 Three properties recur across all three, and they're the reason the model works:
@@ -20,6 +32,33 @@ Three properties recur across all three, and they're the reason the model works:
    matter how strong the idea is. Caps compose: the final score is the *lowest* cap triggered.
 3. **Evidence or it didn't happen.** Every task names an `evidence_path`. A verdict without a
    stored artifact is not reviewable.
+
+## Provenance
+
+Captured from a Claude Code session transcript, not generated here. The capture was lossy, and
+the following were repaired rather than re-pulled — **verify each against the original session
+before trusting it**:
+
+| File | Line | Was | Now | Reconstructed from |
+|---|---|---|---|---|
+| value.md | V-6 schema | `"threshold": "` | `"ratio < 0.20"` | the V-6 row's own threshold, `<20% of demo-path LOC` |
+| feasibility.md | F-2a | `'$0>=s && $0` | `'$0>=s && $0<=e'` + count | F-2a's threshold, `≥80% inside window` |
+| feasibility.md | F-2c | `if (d3600)` | `if (d<0) d=-d; if (d>3600)` | F-2c's threshold, `drift <1h` |
+| feasibility.md | F-6 | `--random-source=` | `--random-source=<(yes "$PROBE_SEED")` | the `probe_seed` metric, "must be reproducible" |
+
+Also repaired, without loss of meaning: all three script blocks closed their code fence early and
+spilled the remaining shell into prose; `u5_environment_matrix.yml` had no fence of its own; and
+`usability.md` ended on a line of chat from the source session.
+
+Names were also made self-describing across the tree — see the naming commit. So these files are
+**faithful in substance, not verbatim in text**.
+
+## Who owns the caps
+
+Each scope's own *Execution order* table is the source of truth for its caps. The table in
+[../evaluator/README.md](../evaluator/README.md) is the merged view across all three, and
+[../builder/README.md](../builder/README.md) restates the five that cannot be retrofitted. A cap
+that changes must change in all three — the contract first.
 
 ## Two things that expire
 

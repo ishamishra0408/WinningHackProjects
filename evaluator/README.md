@@ -1,6 +1,6 @@
 # Evaluator — scoring a won project
 
-Point this at any winning project from [../data/winners-top3.md](../data/winners-top3.md) and
+Point this at any winning project from [../research/winners-top3.md](../research/winners-top3.md) and
 get a defensible /5 per scope plus one overall verdict.
 
 **Inputs:** `event_url` (the event page — theme, prompt, published criteria) and `repo_url`.
@@ -40,7 +40,7 @@ lowest cap any failure triggered.
 |-------|---------|---------|---------|
 | **Value** | `V-3` or `V-4` passes when it should break (staged demo) | `V-6` mock ratio ≥20% of demo-path LOC | `V-8` claimed number unreproducible |
 | **Usability** | payoff unreachable without the author | `U-6` README blocks don't execute as written | `U-5` <3/3 environments · `U-3` >0 undocumented steps · `U-2` >10 min |
-| **Feasibility** | `F-2b` <80% in window, or `F-2a`/`F-2b` disagree, or unrostered author, or `F-3` opening commit ≥50% of final LOC | clean build / lockfile / `F-6` comprehension fails | one-dump cadence or CI absent |
+| **Feasibility** | `F-2b` <80% in window, or `F-2a`/`F-2b` disagree, or `F-2c` drift ≥1h on >10% of commits, or unrostered author, or `F-3` opening commit ≥50% of final LOC | clean build / lockfile / `F-6` comprehension fails | one-dump cadence or CI absent |
 
 `V-1`, `U-1` or `F-1` missing does not cap — it makes that scope **unscorable**. Record it as
 unscorable; do not substitute a low score, which reads as "measured and bad" rather than
