@@ -33,6 +33,33 @@ Three properties recur across all three, and they're the reason the model works:
 3. **Evidence or it didn't happen.** Every task names an `evidence_path`. A verdict without a
    stored artifact is not reviewable.
 
+## Provenance
+
+Captured from a Claude Code session transcript, not generated here. The capture was lossy, and
+the following were repaired rather than re-pulled — **verify each against the original session
+before trusting it**:
+
+| File | Line | Was | Now | Reconstructed from |
+|---|---|---|---|---|
+| value.md | V-6 schema | `"threshold": "` | `"ratio < 0.20"` | the V-6 row's own threshold, `<20% of demo-path LOC` |
+| feasibility.md | F-2a | `'$0>=s && $0` | `'$0>=s && $0<=e'` + count | F-2a's threshold, `≥80% inside window` |
+| feasibility.md | F-2c | `if (d3600)` | `if (d<0) d=-d; if (d>3600)` | F-2c's threshold, `drift <1h` |
+| feasibility.md | F-6 | `--random-source=` | `--random-source=<(yes "$PROBE_SEED")` | the `probe_seed` metric, "must be reproducible" |
+
+Also repaired, without loss of meaning: all three script blocks closed their code fence early and
+spilled the remaining shell into prose; `u5_environment_matrix.yml` had no fence of its own; and
+`usability.md` ended on a line of chat from the source session.
+
+Names were also made self-describing across the tree — see the naming commit. So these files are
+**faithful in substance, not verbatim in text**.
+
+## Who owns the caps
+
+Each scope's own *Execution order* table is the source of truth for its caps. The table in
+[../evaluator/README.md](../evaluator/README.md) is the merged view across all three, and
+[../builder/README.md](../builder/README.md) restates the five that cannot be retrofitted. A cap
+that changes must change in all three — the contract first.
+
 ## Two things that expire
 
 These constrain the order you must run tasks in, across scopes:

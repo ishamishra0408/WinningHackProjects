@@ -1,6 +1,6 @@
 # Scope: Value
 
-Verbatim audit contract. Deterministic tasks run before any human rubric, and no author scores their own project.
+Audit contract, captured from source — see [provenance](README.md#provenance). Deterministic tasks run before any human rubric, and no author scores their own project.
 
 **Weight:** not stated in the source. Usability is 25 and Feasibility is 20; Value's weight is unset — see [../evaluator/README.md](../evaluator/README.md).
 
@@ -57,7 +57,7 @@ Verbatim audit contract. Deterministic tasks run before any human rubric, and no
   "runs": 2,
   "deterministic": true,
   "result": { "mock_loc": 88, "demo_path_loc": 913, "ratio": 0.096 },
-  "threshold": "
+  "threshold": "ratio < 0.20",
   "verdict": "PASS",
   "blocking": true,
   "evidence_path": "evidence/v6/mock-ratio.json",
@@ -99,8 +99,8 @@ hyperfine --warmup 1 --runs 10 --export-json "$OUT/v8/claim-reproduction.json" '
 # throughput claims:  k6 run --summary-export "$OUT/v8/k6.json" load.js
 # V-9 — is a numeric claim even present?
 rg -n --no-heading '[0-9]+(\.[0-9]+)?\s*(x|%|ms|s|req/s|faster|cheaper)' README.md \
-```
   | tee "$OUT/v9/claim-present.txt"
+```
 
 ## Execution order
 

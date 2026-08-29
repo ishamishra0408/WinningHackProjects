@@ -1,6 +1,6 @@
 # Scope: Feasibility
 
-Verbatim audit contract. **Weight: 20.**
+Audit contract, captured from source — see [provenance](README.md#provenance). **Weight: 20.**
 
 Core finding that shapes the contract: git author/committer dates are trivially forgeable, so the timeline must come from GitHub's server-side record, not the clone.
 
@@ -75,7 +75,7 @@ Core finding that shapes the contract: git author/committer dates are trivially 
 ```bash
 #!/usr/bin/env bash
 set -euo pipefail
-OWNER=owner; REPO=repo; START=2026-08-15T09:00:00Z; END=2026-08-17T17:00:00Z
+OWNER=owner; REPO=repo; PROBE_SEED=publish-this-seed; START=2026-08-15T09:00:00Z; END=2026-08-17T17:00:00Z
 OUT=evidence; mkdir -p "$OUT"/{f1,f2,f3,f4,f5,f6,f7,f9,f11}
 git clone "https://github.com/$OWNER/$REPO" src && cd src
 # ---------- F-2b: AUTHORITATIVE timeline (server-side, unforgeable) ----------
@@ -84,67 +84,39 @@ gh api "repos/$OWNER/$REPO/events" --paginate \
 gh api "repos/$OWNER/$REPO" --jq '{created_at,pushed_at,default_branch}' > "../$OUT/f2/repo-meta.json"
 # ---------- F-2a: claimed timeline ----------
 git log --format='%ad' --date=iso-strict | sort > "../$OUT/f2/git-dates.txt"
-awk -v s="$START" -v e="$END" '$0>=s && $0
+awk -v s="$START" -v e="$END" '$0>=s && $0<=e' "../$OUT/f2/git-dates.txt" | wc -l
 # ---------- F-2c: tamper check — author vs committer drift ----------
 git log --format='%H %ad %cd' --date=unix \
-```
-  | awk '{d=$3-$2; if (d3600) print $1, d}' \
-
+  | awk '{d=$3-$2; if (d<0) d=-d; if (d>3600) print $1, d}' \
   | tee "../$OUT/f2/date-drift.txt" | wc -l
-
 # ---------- F-12: cadence shape ----------
-
 git log --format=%ad --date=format:'%Y-%m-%d %H' | sort | uniq -c | tee "../$OUT/f2/cadence.txt"
-
 # ---------- F-3: opening-commit mass ----------
-
 FIRST=$(git rev-list --max-parents=0 HEAD | tail -1)
-
 git show --numstat --format= "$FIRST" | awk '{s+=$1} END{print "first_commit_loc="s}'
-
 scc --format json . | jq '[.[].Code] | add' | xargs -I{} echo "final_loc={}"
-
 # ---------- F-4: authorship ----------
-
 git shortlog -sne --all | tee "../$OUT/f4/shortlog.txt"
-
 git log --format='%(trailers:key=Co-authored-by)' | sort -u >> "../$OUT/f4/shortlog.txt"
-
 # ---------- F-5: effort (ADVISORY — COCOMO assumes human-typed code) ----------
-
 scc --format json . > "../$OUT/f5/scc.json"
-
 scc . | grep -Ei 'estimated|cost'
-
 # ---------- F-6: seeded random function picker ----------
-
 rg -n --no-heading -e '^\s*(export\s+)?(async\s+)?function\s+\w+' \
-
    -e '^\s*def \w+' -e '^func \w+' -e '^\s*(pub )?fn \w+' \
-
-   | shuf -n3 --random-source=
-
+   | shuf -n3 --random-source=<(yes "$PROBE_SEED") | tee "../$OUT/f6/picked-functions.txt"
 # ---------- F-7 / F-8: clean build, neutral environment, twice ----------
-
 for i in 1 2; do docker build --no-cache -t "submission:$i" . ; done
-
 docker run --rm submission:1 2>&1 | tee "../$OUT/f7/neutral-run.log"
-
 # ---------- F-10: lockfile integrity ----------
-
 test -f package-lock.json && npm ci
-
 test -f go.sum && go mod verify
-
 test -f Cargo.lock && cargo build --locked
-
 test -f requirements.txt && pip install --require-hashes -r requirements.txt
-
 # ---------- F-9 / F-11 ----------
-
 gh run list -R "$OWNER/$REPO" -L 100 --json conclusion --jq '.[].conclusion' | sort | uniq -c
-
 scc --by-file --format json . | jq 'sort_by(-.Code) | .[0:5]'
+```
 
 ## Execution order
 
