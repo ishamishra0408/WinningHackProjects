@@ -39,6 +39,27 @@ a gallery field, not the repo**, so scanning the README answers a different ques
 | `{"none": true}` | the entrant declares no artifact was submitted → `FAIL` |
 | *omitted* | falls back to a README scan; if that finds nothing → **`ABSENT`, not `FAIL`** |
 
+`criteria` resolves `V-1`. The contract makes extraction **an agent read plus a human confirm** —
+so this runner does not fetch the event page and call whatever it found "the criteria". That would
+be a judgment wearing a measurement. It verifies the *shape* of what the extraction returned, which
+is exactly the contract's threshold:
+
+```json
+"criteria": [{"id": "c1", "text": "Showcases Mistral",
+              "pass_when": "a Mistral model is called on the demo path",
+              "criteria_source": "published"}]
+```
+
+| | Result |
+|---|---|
+| ≥3 criteria, every one carrying a pass condition | `PASS` |
+| fewer than 3, or any one without a pass condition | `FAIL` — and **Value goes `unscorable`**, because everything downstream scores against these |
+| *omitted* | **`ABSENT`, not `FAIL`** — nobody handed us the criteria, which is not the same as the event having none |
+
+`pass_when`, `pass_condition` and `passes_when` are all accepted. When every criterion declares the
+same `criteria_source`, it is used below; **when two disagree, neither is used** — a disagreement
+must not silently pick a winner.
+
 `criteria_source` decides whether `V-2`'s cap applies at all — `published` · `inferred` ·
 `research-fallback`. **A cap is only as legitimate as the criteria it scores against.** Criteria an
 auditor inferred from a kickoff deck, or substituted from the topic's winners, are *our* bar and
@@ -60,7 +81,7 @@ tasks that need them return `ABSENT`, not a guess.
 | State | Means | Example |
 |---|---|---|
 | `MEASURED` | the check ran | `F-2c` → `{"drift_violations": 0, "commits_total": 41, "within_1h_share": 1.0}` |
-| `ABSENT` | a fact about **the subject** | `F-4` → no entrant roster supplied |
+| `ABSENT` | a fact about **the subject** | `F-4` → no entrant roster supplied; `V-1` → no criteria supplied |
 | `UNEVALUABLE` | a fact about **the instrument** | `V-3` → needs Docker |
 
 **`UNEVALUABLE` is not a pass.** Ten Usability tasks need an operator or a container and will

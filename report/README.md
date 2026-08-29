@@ -45,9 +45,15 @@ report can be checked against the contracts it claims to come from.
  "event_url": "https://luma.com/…",
  "window_end": "2026-08-22", "window_days": 1,
  "starter_sha": "857113ee",
- "criteria_source": "published",
+ "criteria": [{"id": "c1", "text": "Showcases Mistral",
+               "pass_when": "a Mistral model is called on the demo path",
+               "criteria_source": "published"}],
  "demo_artifact": {"url": "https://…"}}
 ```
+
+Leave `criteria` out and `V-1` reports **ABSENT**, which keeps the whole Value scope unscorable —
+every task in it scores against those criteria. Supply fewer than three, or one without a pass
+condition, and `V-1` **fails**, which is a different and louder answer.
 
 ```json
 {"event_url": "https://luma.com/…",

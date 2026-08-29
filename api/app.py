@@ -89,6 +89,7 @@ class Handler(BaseHTTPRequestHandler):
             starter_sha=body.get("starter_sha"),
             demo_artifact=body.get("demo_artifact"),
             criteria_source=body.get("criteria_source"),
+            criteria=body.get("criteria"),
         )
         if "error" in result and "tasks" not in result:
             self._send(502, result)
@@ -103,7 +104,8 @@ class Handler(BaseHTTPRequestHandler):
             "tasks": result["tasks"],
             "overall": None,
             "weights": runners.load_weights(),
-            "criteria_source": body.get("criteria_source"),
+            "criteria_source": result.get("criteria_source"),
+            "criteria_source_from": result.get("criteria_source_from"),
             "overall_refused_because": [
                 "UNEVALUABLE is not a pass -- a blocking task that did not run leaves each scope's "
                 "cap a CEILING, not a score, and every scope here has at least one",

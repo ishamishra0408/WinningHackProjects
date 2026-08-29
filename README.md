@@ -161,6 +161,10 @@ behind both diagrams live in [requirements.md](requirements.md).
 - Winner audits: **28 repos across 10 events**, harvested from the galleries' embedded
   `ItemList` — 1,060 of 1,092 projects carry a repo link. **0 of 28 pass all eight measured tasks.**
 - API: two endpoints, stdlib only, thresholds read from the contracts at call time.
+- `V-1` implemented: it verifies the **shape** of extracted criteria — ≥3, each with a
+  pass condition — and refuses to do the extraction, which the contract makes an agent
+  read plus a human confirm. Supply none and it is ABSENT, which keeps Value unscorable;
+  supply too few and it FAILS, which is louder. Value now has a measurable blocking task.
 - UI: Streamlit, both modes, one dependency. The spec mode's yes/no rows are **ticked by
   the operator**, not inferred from the plan's prose — a keyword scan cannot read a
   negation, so it pre-ticks and nothing more.

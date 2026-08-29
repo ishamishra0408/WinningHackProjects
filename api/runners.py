@@ -234,13 +234,70 @@ def _demo_artifact(out: dict, set_, readme_text: str, declared: dict | None) -> 
                "{url|path|none:true} to resolve this.")
 
 
+# ---- V-1 ---------------------------------------------------------------------
+# The contract makes V-1 "agent (WebFetch) + 1 human confirm": a person or an
+# agent reads the event page and writes criteria.json. That extraction is a
+# judgment, and this runner does not make it -- fetching a page and calling
+# whatever it found "the criteria" would be a judgment wearing a measurement.
+#
+# What IS mechanical is the shape of what came back, and that is the contract's
+# stated threshold: at least three criteria, each carrying a pass condition. So
+# V-1 verifies the extraction; it does not perform it.
+PASS_CONDITION_KEYS = ("pass_when", "pass_condition", "passes_when")
+
+
+def _criteria(out: dict, declared: list | None) -> str | None:
+    """Check the shape of extracted criteria. Returns the source they declare."""
+    def finish(state, value, verdict, reason=None):
+        out["V-1"].update(state=state, value=value, verdict=verdict, reason=reason)
+
+    if declared is None:
+        finish(ABSENT, None, None,
+               "no criteria supplied -- V-1 is an agent extraction from the event page, "
+               "confirmed by a human, and this runner verifies that output rather than "
+               "producing it")
+        return None
+    if not isinstance(declared, list):
+        finish(UNEVALUABLE, None, None, "criteria must be a list of objects")
+        return None
+
+    total, missing, sources = len(declared), [], set()
+    for i, c in enumerate(declared):
+        if not isinstance(c, dict):
+            missing.append(f"#{i + 1}")
+            continue
+        if not any(str(c.get(k) or "").strip() for k in PASS_CONDITION_KEYS):
+            missing.append(str(c.get("id") or c.get("text") or f"#{i + 1}")[:40])
+        src = c.get("criteria_source")
+        if src:
+            sources.add(src)
+
+    value = {"criteria_found": total, "with_pass_condition": total - len(missing),
+             "missing_pass_condition": missing or None,
+             "criteria_source": sorted(sources) or None}
+    finish(MEASURED, value, "PASS" if total >= 3 and not missing else "FAIL")
+    # One declared source is usable downstream. Two are a disagreement, and a
+    # disagreement must not silently pick a winner -- V-2's cap turns on this.
+    return sources.pop() if len(sources) == 1 else None
+
+
 def audit_repo(repo_url: str, window_end: str | None = None, window_days: int = 1,
                starter_sha: str | None = None, demo_artifact: dict | None = None,
-               criteria_source: str | None = None, local_path: str | None = None) -> dict:
+               criteria_source: str | None = None, local_path: str | None = None,
+               criteria: list | None = None) -> dict:
     """Run every task computable from a clone. Everything else is UNEVALUABLE."""
-    tasks = apply_cap_conditions(load_tasks(), {"criteria_source": criteria_source})
     out = {tid: {**meta, "state": UNEVALUABLE, "reason": NEEDS.get(tid, "not implemented"),
-                 "value": None, "verdict": None} for tid, meta in tasks.items()}
+                 "value": None, "verdict": None} for tid, meta in load_tasks().items()}
+    # V-1 runs before the caps are resolved, because the source the criteria
+    # declare is the thing V-2's cap turns on. An explicit criteria_source still
+    # wins -- the caller may know something the file does not say.
+    declared_source = _criteria(out, criteria)
+    criteria_source = criteria_source or declared_source
+    for tid, meta in apply_cap_conditions(load_tasks(),
+                                          {"criteria_source": criteria_source}).items():
+        out[tid].update({k: v for k, v in meta.items()
+                         if k in ("cap", "blocking", "cap_condition", "cap_condition_met",
+                                  "cap_demoted_because")})
     # local_path audits a clone you already have -- used by the batch runner and
     # by anyone re-auditing 28 repos without cloning them 28 times.
     tmp = None if local_path else tempfile.mkdtemp(prefix="wh-audit-")
@@ -355,7 +412,12 @@ def audit_repo(repo_url: str, window_end: str | None = None, window_days: int = 
             set_("U-4", {"entrypoints": oneclick}, bool(oneclick))
 
         return {"repo": repo_url, "commits": commits, "own_loc": loc,
-                "vendored_loc": vendored_loc, "tasks": out}
+                "vendored_loc": vendored_loc, "criteria_source": criteria_source,
+                "criteria_source_from": ("the caller" if criteria and declared_source
+                                         and criteria_source != declared_source
+                                         else "the criteria file" if declared_source
+                                         else "the caller" if criteria_source else None),
+                "tasks": out}
     finally:
         if tmp:
             shutil.rmtree(tmp, ignore_errors=True)

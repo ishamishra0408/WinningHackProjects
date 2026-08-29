@@ -114,10 +114,11 @@ def show(value) -> str:
             if isinstance(v, (list, tuple)):
                 if not v:
                     v = "none"
+                elif len(v) == 1:
+                    v = str(v[0])
                 else:
                     head = ", ".join(str(x) for x in v[:2])
-                    v = (f"{len(v)}: {head}" if len(v) <= 2
-                         else f"{len(v)} incl. {head} …")
+                    v = f"{head}" if len(v) == 2 else f"{len(v)} incl. {head} …"
             parts.append(f"{k} = {v}")
         note = value.get("note")
         body = esc(_clip(" · ".join(parts) or "—"))
@@ -147,7 +148,8 @@ def project_html(body: dict) -> str:
         window_days=int(body.get("window_days") or 1),
         starter_sha=body.get("starter_sha"),
         demo_artifact=body.get("demo_artifact"),
-        criteria_source=body.get("criteria_source"))
+        criteria_source=body.get("criteria_source"),
+        criteria=body.get("criteria"))
     if "tasks" not in result:
         raise SystemExit(f"could not audit: {result.get('error')} — {result.get('detail', '')}")
     tasks, scopes = result["tasks"], runners.summarise(result["tasks"])
@@ -204,9 +206,11 @@ def project_html(body: dict) -> str:
                "the thing, which is a different fact from the thing being fine.<br><br>"
                "<b>This does not predict winning.</b> 28 repos that demonstrably won their events "
                "fail these contracts. This says whether a project holds up.</div>")
+    src = result.get("criteria_source")
     sub = (f"{esc(body['repo_url'])}"
            + (f" · event {esc(body['event_url'])}" if body.get("event_url") else "")
-           + (f" · criteria {esc(body['criteria_source'])}" if body.get("criteria_source") else ""))
+           + (f" · criteria {esc(src)} (per {esc(result.get('criteria_source_from'))})"
+              if src else " · criteria not supplied"))
     return _page("Project audit", sub, "".join(out))
 
 

@@ -68,6 +68,20 @@ def _scan(plan_text: str, words: tuple) -> bool:
     return any(w in low for w in words)
 
 
+def parse_criteria(text: str) -> list | None:
+    """`criterion | passes when ...` per line. Empty means none supplied, which
+    is ABSENT -- a different answer from "supplied and none of them qualify"."""
+    rows = []
+    for line in (text or "").splitlines():
+        if not line.strip():
+            continue
+        head, _, cond = line.partition("|")
+        rows.append({"id": f"c{len(rows) + 1}", "text": head.strip(),
+                     "pass_when": cond.strip()})
+    return rows or None
+
+
+
 st.set_page_config(page_title="WinningHackProjects", page_icon="🏆", layout="wide")
 
 
@@ -140,6 +154,15 @@ with st.sidebar:
                 ["not stated", "published", "inferred", "research-fallback"],
                 help="V-2 caps at 2/5 only when the event PUBLISHED its criteria. Criteria you "
                      "inferred from a deck are your bar, not the event's, so they cannot cap.")
+            criteria_text = st.text_area(
+                "Judging criteria — one per line, as `criterion | passes when …`", height=110,
+                placeholder="Showcases Mistral | a Mistral model is called on the demo path\n"
+                            "Topic fit | the build is about the stated topic\n"
+                            "Working demo | a stranger can run it unaided",
+                help="V-1 needs ≥3, each with a pass condition. Reading the event page is an "
+                     "agent-and-human job, so paste what you extracted — the check verifies the "
+                     "shape of it, it does not do the extraction for you. Left empty, V-1 is "
+                     "ABSENT and the whole Value scope stays unscorable.")
             starter_sha = st.text_input("Organizer starter-repo SHA (if any)", "",
                                         help="F-3 then measures from the team's own first commit.")
             demo_url = st.text_input("Demo video / deck URL (if submitted outside the repo)", "")
@@ -186,7 +209,8 @@ if mode == "Evaluate a project":
                 window_days=int(window_days),
                 starter_sha=starter_sha.strip() or None,
                 demo_artifact={"url": demo_url.strip()} if demo_url.strip() else None,
-                criteria_source=None if criteria_source == "not stated" else criteria_source)
+                criteria_source=None if criteria_source == "not stated" else criteria_source,
+                criteria=parse_criteria(criteria_text))
         if "tasks" not in result:
             st.error(f"{result.get('error')} — {result.get('detail','')}")
             st.stop()
