@@ -30,7 +30,7 @@ have been scheduled.
 | **STRONG** | mechanically checkable from the event page and the plan, no judgment |
 | **WEAK** | a declaration you make now and cannot verify until later — report it as a declaration, never as a measurement |
 
-14 of 19 are STRONG. Those are the deterministic core: the same event page and the same plan
+16 of 19 are STRONG. Those are the deterministic core: the same event page and the same plan
 produce the same answer.
 
 ## Value — 8 rows, covering all 10 Value tasks
