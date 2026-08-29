@@ -269,19 +269,19 @@ def spec_html(body: dict) -> str:
         for name, v in by_scope.items():
             if not v["weak"] and not v["not_stated"]:
                 continue
-            cols = "".join(f"<col style='width:{w}%'>" for w in (7, 36, 13, 44))
+            cols = "".join(f"<col style='width:{w}%'>" for w in (9, 34, 13, 44))
             out.append(f"<h3>{esc(name.title())}</h3><table>{cols}<thead><tr><th>Row</th>"
                        "<th>What is missing</th><th>Audit tasks you forfeit</th>"
                        "<th>Do this instead</th></tr></thead><tbody>")
             for w in v["weak"]:
-                out.append(f"<tr><td class='id'>{esc(w['row'])} <span class='st FAIL'>FAIL</span>"
-                           f"</td><td>{esc(w['check'])}</td>"
+                out.append(f"<tr><td class='id'>{esc(w['row'])}"
+                           f"<div class='st FAIL'>FAIL</div></td><td>{esc(w['check'])}</td>"
                            f"<td>{esc(' '.join(w['costs_you']) or '—')}</td>"
                            f"<td>{esc(w['action'] or '—')}</td></tr>")
             for rid in v["not_stated"]:
                 r = by_row[rid]
-                out.append(f"<tr><td class='id'>{esc(rid)} <span class='st ABSENT'>UNSTATED</span>"
-                           f"</td><td>{esc(r['check'])}</td>"
+                out.append(f"<tr><td class='id'>{esc(rid)}"
+                           f"<div class='st ABSENT'>UNSTATED</div></td><td>{esc(r['check'])}</td>"
                            f"<td>{esc(' '.join(r['buys']) or '—')}</td>"
                            f"<td>{esc(r['action'] or 'state it, either way — silence is not a pass')}"
                            f"</td></tr>")
@@ -291,7 +291,7 @@ def spec_html(body: dict) -> str:
                    "the table below with the value it was answered with.</div>")
 
     out.append("<h2>Why yes — what the plan already buys</h2>")
-    cols = "".join(f"<col style='width:{w}%'>" for w in (7, 36, 13, 44))
+    cols = "".join(f"<col style='width:{w}%'>" for w in (9, 34, 13, 44))
     out.append(f"<table>{cols}<thead><tr><th>Row</th><th>Check that passes</th>"
                "<th>Audit tasks it buys</th><th>Scope</th></tr></thead><tbody>")
     # One row can buy tasks in two scopes, so collect its scopes before printing
