@@ -142,7 +142,12 @@ def metric_rows(tasks: dict, scope: str) -> list[dict]:
             continue
         val = t["value"]
         if isinstance(val, dict):
-            shown = " · ".join(f"{k}={v}" for k, v in val.items() if v is not None and k != "note")
+            # per_criterion and judgments are lists of records. A dataframe cell
+            # renders them as one unreadable blob, so the summary numbers beside
+            # them carry the row and the detail stays in the PDF report.
+            shown = " · ".join(f"{k}={v}" for k, v in val.items()
+                               if v is not None and k not in ("note", "per_criterion",
+                                                              "judgments", "output_tail"))
         else:
             shown = "—" if val is None else str(val)
         out.append({

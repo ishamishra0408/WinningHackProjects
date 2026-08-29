@@ -1,5 +1,18 @@
 # Winner audits — the contracts run against 28 winning repos
 
+> **Historical record, and deliberately not re-run.** This pass used the 36-task contracts as they
+> stood on 2026-08-29. Seven of those tasks have since been deleted — `V-3` `V-4` `V-5` `V-6`
+> `F-2a` `F-2b` `F-12` — and `V-2`, `V-7`, `V-9` and `V-10` were rewritten. **Several columns below
+> therefore measure tasks that no longer exist.**
+>
+> It is kept unchanged because it is the evidence that produced those changes, and rewriting it to
+> match the contracts it argued against would destroy the argument. `F-2a`'s 50% pass rate is
+> *why* `F-2a` was deleted; a table with that column removed cannot show you.
+>
+> Any new claim about winners needs a fresh run — `research/rerun-winners.py`, over the 32 tasks
+> that exist now.
+
+
 First contact between the [contracts](../scopes/README.md) and projects that actually won.
 The result indicts the contracts, not the projects.
 
