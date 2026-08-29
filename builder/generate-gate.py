@@ -62,6 +62,33 @@ def render(task_id: str, tasks: dict[str, tuple[str, str, bool]]) -> str:
     return "\n".join(textwrap.wrap(body, width=98, subsequent_indent="      "))
 
 
+# A threshold's value belongs to its contract. These are the only other files
+# allowed to carry one, and each has a stated reason.
+ALLOWED = {
+    "scopes/value.md", "scopes/usability.md", "scopes/feasibility.md",   # the owners
+    "evaluator/scorecard-TEMPLATE.md",   # the single ID decoder, per scopes/README.md
+    "scopes/README.md",                  # the provenance table's historical record
+    "builder/pre-submit-gate.md",        # generated between the markers, by this script
+}
+
+
+def check_drift(tasks: dict[str, tuple[str, str, bool]]) -> list[str]:
+    """Report threshold values that have grown a second home."""
+    tokens = set()
+    for _, threshold, _ in tasks.values():
+        tokens |= set(re.findall(r"[<>≥≤±]\s*\d+\s*(?:%|min|h\b)|\b\d+/\d+\b", threshold))
+    findings = []
+    for path in sorted(ROOT.rglob("*.md")):
+        rel = path.relative_to(ROOT).as_posix()
+        if rel in ALLOWED or ".git" in rel:
+            continue
+        text = path.read_text()
+        hits = sorted({t for t in tokens if t in text})
+        if hits:
+            findings.append(f"{rel}: {', '.join(hits)}")
+    return findings
+
+
 def main() -> int:
     tasks = read_contracts()
     text = GATE.read_text()
@@ -89,6 +116,14 @@ def main() -> int:
     GATE.write_text(out)
     print(f"{GATE.relative_to(ROOT)}: {'rewritten' if changed else 'already current'} "
           f"({len(tasks)} tasks read from {len(CONTRACTS)} contracts)")
+
+    drift = check_drift(tasks)
+    if drift:
+        print("\nthreshold values found outside their contract:", file=sys.stderr)
+        for d in drift:
+            print(f"  {d}", file=sys.stderr)
+        return 1
+    print("no threshold value has a second home")
     return 0
 
 
