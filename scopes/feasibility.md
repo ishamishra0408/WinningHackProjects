@@ -24,7 +24,7 @@ Core finding that shapes the contract: git author/committer dates are trivially 
 | F-1 | Fix the window — start/end/TZ + entrant roster | judge, from event page | WebFetch | f1_window.sh | window-and-roster.json | both timestamps + roster present | ✅ |
 | F-2a | Claimed timeline | auto | git log | f2_timeline.sh | commit histogram | ≥80% inside window | ⬜ claimed only |
 | F-2b | Observed timeline — server push events | auto | gh api .../events | f2_timeline.sh | push-events.json | ≥80% inside window | ✅ authoritative |
-| F-2c | Tamper check — author vs committer date drift | auto | git log --format='%ad %cd' | f2_timeline.sh | date-drift.txt | drift <1h on ≥90% of commits | ✅ mismatch with F-2b = rewritten history |
+| F-2c | Tamper check — author vs committer date drift | auto | git log --format='%ad %cd' | f2_timeline.sh | date-drift.json | drift <1h on ≥90% of commits | ✅ mismatch with F-2b = rewritten history |
 | F-3 | Opening-commit mass | auto | git log --numstat | f3_opening_commit_mass.sh | first-commit LOC share | <50% of final LOC | ✅ |
 | F-4 | Author roster match | auto | git shortlog -sne + Co-authored-by trailers | f4_authors.sh | authors.json | every author on roster | ✅ |
 | F-5 | Effort plausibility | auto | scc (COCOMO dev-months) | f5_effort.sh | effort.json | ≲3× available person-hours | ⬜ advisory only |
@@ -46,6 +46,7 @@ Core finding that shapes the contract: git author/committer dates are trivially 
 | ai_disclosed: bool | F-5, F-6 | if the event required disclosure, undisclosed heavy codegen is a rules issue, not a feasibility one |
 | probe_seed | F-6 | random selection must be reproducible or the author can dispute the picks |
 | probe_live: true, author_present: true | F-6 | the only task where the author's presence is required, not disqualifying |
+| commits_total | F-2c | the threshold is a share, not a count — a violation count without the commit total is not a share |
 | runs: 2 | F-7, F-10 | a build that passes once and fails once is a fail |
 | squash_merged: bool | F-4 | squash rewrites authorship — fall back to Co-authored-by trailers and PR authorship |
 
@@ -62,8 +63,9 @@ Core finding that shapes the contract: git author/committer dates are trivially 
   "timeline_source": "events",
   "events_captured_at": "2026-08-19T00:00:00Z",
   "result": { "push_events": 41, "inside_window": 39, "share": 0.95,
-              "git_claimed_share": 0.95, "date_drift_violations": 0 },
-  "threshold": "share >= 0.80 AND matches F-2a",
+              "git_claimed_share": 0.95,
+              "date_drift_violations": 0, "commits_total": 47, "within_1h_share": 1.0 },
+  "threshold": "share >= 0.80 AND matches F-2a AND within_1h_share >= 0.90",
   "verdict": "PASS",
   "blocking": true,
   "evidence_path": "evidence/f2/push-events.json"
@@ -86,9 +88,14 @@ gh api "repos/$OWNER/$REPO" --jq '{created_at,pushed_at,default_branch}' > "../$
 git log --format='%ad' --date=iso-strict | sort > "../$OUT/f2/git-dates.txt"
 awk -v s="$START" -v e="$END" '$0>=s && $0<=e' "../$OUT/f2/git-dates.txt" | wc -l
 # ---------- F-2c: tamper check — author vs committer drift ----------
-git log --format='%H %ad %cd' --date=unix \
-  | awk '{d=$3-$2; if (d<0) d=-d; if (d>3600) print $1, d}' \
-  | tee "../$OUT/f2/date-drift.txt" | wc -l
+# the threshold is a SHARE (<1h on >=90% of commits), so emit the denominator too
+git log --format='%H %ad %cd' --date=unix > "../$OUT/f2/commit-dates.txt"
+awk '{d=$3-$2; if (d<0) d=-d; if (d>3600) print $1, d}' "../$OUT/f2/commit-dates.txt" \
+  > "../$OUT/f2/date-drift.txt"
+DRIFT=$(wc -l < "../$OUT/f2/date-drift.txt"); TOTAL=$(wc -l < "../$OUT/f2/commit-dates.txt")
+jq -n --argjson d "$DRIFT" --argjson t "$TOTAL" \
+  '{drift_violations:$d, commits_total:$t, within_1h_share:(1 - $d/$t)}' \
+  | tee "../$OUT/f2/date-drift.json"
 # ---------- F-12: cadence shape ----------
 git log --format=%ad --date=format:'%Y-%m-%d %H' | sort | uniq -c | tee "../$OUT/f2/cadence.txt"
 # ---------- F-3: opening-commit mass ----------
@@ -123,7 +130,7 @@ scc --by-file --format json . | jq 'sort_by(-.Code) | .[0:5]'
 | Step | Tasks | Gate |
 |---|---|---|
 | 1 | F-1 | no window or roster → Feasibility unscorable, stop |
-| 2 | F-2b first (evidence expires), then F-2a, F-2c, F-12 | F-2b <80% or F-2a/F-2b disagree → capped at 1/5, escalate to organizers |
+| 2 | F-2b first (evidence expires), then F-2a, F-2c, F-12 | F-2b <80%, or F-2a/F-2b disagree, or F-2c drift ≥1h on >10% of commits → capped at 1/5, escalate to organizers |
 | 3 | F-3, F-4 | F-3 ≥50% or unrostered author → capped at 1/5 |
 | 4 | F-7, F-8, F-10 (auto) | any fail → capped at 2/5 |
 | 5 | F-5, F-9, F-11 | advisory, no cap |
@@ -134,10 +141,10 @@ scc --by-file --format json . | jq 'sort_by(-.Code) | .[0:5]'
 | /5 | Means |
 |---|---|
 | 5 | timeline clean on both sources · roster exact · clean build ×2 · lockfile integral · 3/3 comprehension |
-| 4 | one advisory miss (effort ratio, CI, hotspot) |
+| 4 | one advisory miss (effort ratio, CI, single-file LOC share) |
 | 3 | builds and runs neutrally, but cadence is one dump or CI absent |
 | 2 | fails clean-build, lockfile, or comprehension probe |
-| 1 | timeline outside window, sources disagree, or unrostered authorship |
+| 1 | timeline outside window, sources disagree, author/committer drift on >10% of commits, or unrostered authorship |
 
 | Field | Value |
 |---|---|

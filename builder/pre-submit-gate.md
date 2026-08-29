@@ -50,12 +50,15 @@ Capture within 90 days of the event or the authoritative record is gone.
 
 ```bash
 gh api "repos/<owner>/<repo>/events" --paginate > push-events.json   # F-2b
-git log --format='%ad %cd' > date-drift.txt                          # F-2c
+git log --format='%H %ad %cd' --date=unix > commit-dates.txt         # F-2c
+awk '{d=$3-$2; if (d<0) d=-d; if (d>3600) print $1, d}' commit-dates.txt > date-drift.txt
+echo "drift $(wc -l < date-drift.txt) / $(wc -l < commit-dates.txt) commits"
 git shortlog -sne                                                    # F-4
 ```
 
 - [ ] 🔒 `F-2b` ≥80% of push events inside the window
-- [ ] 🔒 `F-2c` author/committer drift <1h on ≥90% of commits
+- [ ] 🔒 `F-2c` author/committer drift <1h on ≥90% of commits — **report both numbers**;
+      a violation count with no commit total is not a share
 - [ ] 🔒 `F-3` opening commit <50% of final LOC
 - [ ] 🔒 `F-4` every author on the entrant roster
 - [ ] `F-12` ≥8 distinct commit hours
