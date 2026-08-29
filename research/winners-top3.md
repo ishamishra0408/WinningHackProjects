@@ -2,9 +2,11 @@
 
 Pulled directly from each gallery / winners writeup listed in [events-by-topic.md](events-by-topic.md).
 
-**On the link column.** Cerebral Valley has no per-project permalink — project cards open a modal
-with no URL of its own. So for CV events the link is the winning team's CV profile, which is the
-only stable per-winner URL that exists. The four non-CV writeups do have real project links
+**On the link column.** The link here is the winning team's Cerebral Valley profile. That was
+adopted on the belief that CV has no per-project permalink — **which is wrong, and the correction
+matters**: each gallery embeds a schema.org `ItemList` carrying a per-project URL (`?project=N`)
+and the project's GitHub repo. See [winner-audits.md](winner-audits.md) for the harvest; 1,060 of
+1,092 projects across 12 galleries carry a repo link. This column has not been rewritten yet. The four non-CV writeups do have real project links
 (GitHub repos, submission posts) and those are used instead.
 
 Where the team name and the product name differ, both are given as `Team — Product`.
