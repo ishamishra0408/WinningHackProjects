@@ -29,6 +29,7 @@ The repo answers four questions in order. Each layer feeds the next.
 | [evaluator/](evaluator/README.md) | Merged run order, caps, and a [scorecard template](evaluator/scorecard-TEMPLATE.md) for auditing any won project. Results land in [evaluator/audits/](evaluator/audits/). Alongside it, a [deep-dive template](evaluator/deep-dive-TEMPLATE.md) — the scorecard measures, the deep-dive explains. |
 | [designer/](designer/README.md) | The 18 checks that run at t=0, before any code exists — each buys a specific audit task you would otherwise find out about too late. Plus a [design card](designer/design-card-TEMPLATE.md), filled per idea into [designer/cards/](designer/cards/). |
 | [builder/](builder/README.md) | The contracts inverted into a build spec, plus the [pre-submit gate](builder/pre-submit-gate.md) — whose checkbox lines are generated from the contracts by [generate-gate.py](builder/generate-gate.py), so a threshold has one home. |
+| [requirements.md](requirements.md) | Functional + non-functional requirements, improved by three advisor passes (metric-design, qe-ic, ds-ic) plus an Ousterhout module review; includes the scoring function and the `w_value` tradeoff math. |
 
 ## Workflow
 
@@ -40,6 +41,95 @@ The repo answers four questions in order. Each layer feeds the next.
    audit tasks are ABSENT at that point, and the 18 that are not buy the ones you cannot fix later.
 4. Feed the card into `builder/` when speccing the project.
 5. Run `builder/pre-submit-gate.md` before submitting.
+
+## How the output is computed
+
+### Inputs → outputs, across the four layers
+
+```mermaid
+flowchart LR
+    subgraph Inputs
+        EV[event_url<br/>theme, prompt, criteria]
+        RP[repo_url<br/>project under audit]
+        PL[your plan<br/>idea at t=0]
+    end
+
+    subgraph Research
+        R1[research/events-by-topic.md]
+        R2[research/winners-top3.md]
+    end
+
+    subgraph Measurement
+        SC[scopes/ — 3 contracts<br/>35 tasks V-* U-* F-*]
+        EVAL[evaluator/ — merged run order,<br/>phases 0–5]
+    end
+
+    subgraph Design
+        DC[designer/ — 18 t=0 checks D1–D18]
+        CARD[designer/cards/*.md<br/>filled design card]
+    end
+
+    subgraph Construction
+        BS[builder/ — build order,<br/>5 unrecoverables]
+        GATE[builder/pre-submit-gate.md]
+    end
+
+    subgraph Outputs
+        AUD[evaluator/audits/*<br/>3 × jsonl + evidence/ + scorecard]
+        VERDICT[overall verdict /1<br/>weighted, cap-composed]
+        GO[submit / fix / cut-scope decision]
+    end
+
+    EV --> R1 --> R2
+    EV --> SC
+    RP --> EVAL
+    R2 -->|where the bar sat| DC
+    SC --> EVAL --> AUD --> VERDICT
+    EV --> DC
+    PL --> DC --> CARD --> BS --> GATE --> GO
+    SC -->|thresholds, one home| GATE
+```
+
+### Backend architecture — how a verdict is produced
+
+```mermaid
+flowchart TD
+    subgraph SSOT["Source of truth"]
+        C[scopes/*.md task tables<br/>ID · threshold · blocking]
+    end
+
+    subgraph Generation
+        GG[generate-gate.py<br/>regex-parses contract tables, idempotent]
+        PSG[pre-submit-gate.md<br/>checkbox lines rewritten in place]
+    end
+
+    subgraph Probes["Deterministic probes — run first, run twice"]
+        AUTO[auto scripts: v3_offline, u6_readme,<br/>f2_timeline, f7_build, …]
+        EXP["expiring evidence: F-2b GitHub Events API (~90d)<br/>naive operators (one shot per person)"]
+    end
+
+    subgraph Humans["Human rubric — probe results withheld until submitted"]
+        RAT[2 independent raters: V-2, V-7]
+        F6[F-6 live comprehension probe, seeded random]
+    end
+
+    subgraph Compute["Score computation"]
+        JSONL[value / usability / feasibility .jsonl<br/>one record per task + evidence_path]
+        CAPS["S_k = min(rubric, lowest triggered cap)"]
+        OVR["Overall = (S_v·w_v + S_u·25 + S_f·20) / (5·(w_v+45))<br/>w_v frozen before any result is read"]
+    end
+
+    C --> GG --> PSG
+    C -->|thresholds frozen| AUTO
+    AUTO --> JSONL
+    EXP --> JSONL
+    RAT --> JSONL
+    F6 --> JSONL
+    JSONL --> CAPS --> OVR
+```
+
+The scoring math, the `w_value` sensitivity analysis, and the advisor-reviewed requirements
+behind both diagrams live in [requirements.md](requirements.md).
 
 ## Status
 
