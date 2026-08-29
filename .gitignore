@@ -1,0 +1,9 @@
+# Bytecode caches: build output, never source. They were committed by mistake
+# in dd0df56 and churn on every run of the API.
+__pycache__/
+*.py[cod]
+
+# Local venvs and audit scratch
+.venv/
+venv/
+evidence/
