@@ -30,7 +30,7 @@ were not run. Those are **NOT-CHECKED**, not passes.
 
 ## The matrix
 
-| Repo | `F-2a` in window | `F-2c` drift | `F-3` opening | `F-11` file share | `F-12` hours | `F-10` lock | `F-9` CI | `V-9` claim |
+| Repo | `F-2a` share in window | `F-2c` drift | `F-3` opening | `F-11` file share | `F-12` hours | `F-10` lock | `F-9` CI | `V-9` claim |
 |---|---|---|---|---|---|---|---|---|
 | MemoryAtlas | PASS 80.0% | PASS 100% | PASS 31.9% | PASS 11.3% | **FAIL 3** | **FAIL** | **FAIL** | **FAIL** |
 | crowd-whisperer | PASS 100% | PASS 100% | PASS 0.0% | PASS 9.7% | PASS 25 | **FAIL** | **FAIL** | **FAIL** |
@@ -44,7 +44,7 @@ were not run. Those are **NOT-CHECKED**, not passes.
 |---|---|
 | `V-9` numeric claim in README | **5 / 5** |
 | `F-10` lockfile | 4 / 5 |
-| `F-2a` ≥80% in window · `F-9` CI | 3 / 5 |
+| `F-2a` share in window · `F-9` CI | 3 / 5 |
 | `F-3` opening commit · `F-12` commit hours | 2 / 5 |
 | `F-2c` drift · `F-11` file share | 0 / 5 |
 
