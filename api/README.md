@@ -53,7 +53,7 @@ tasks that need them return `ABSENT`, not a guess.
 
 | State | Means | Example |
 |---|---|---|
-| `undeterminable` | a **blocking task declares no cap**, so no scope score can be derived — `V-2` today | resolve it in the contract |
+| `undeterminable` | a **blocking task declares no cap**, so no scope score can be derived. **No task is in this state today** — `V-2` was, and is now a conditional cap. The machinery stays: a future uncapped task must not score silently | resolve it in the contract |
 
 ### Every task returns one of three states
 
