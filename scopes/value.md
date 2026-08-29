@@ -21,8 +21,8 @@ Audit contract, captured from source — see [provenance](README.md#provenance).
 
 | ID | Task | Run by | devTool | Script | Output | Threshold | Caps at |
 |---|---|---|---|---|---|---|---|
-| V-1 | Extract testable success criteria from the event page | agent (WebFetch) + 1 human confirm | WebFetch / curl+pandoc | v1_criteria.sh | criteria.json — 3–5 criteria, each testable | ≥3 criteria, each with a pass condition | unscorable — everything downstream is unscorable without it | 
-| V-2 | Score topic fit against criteria.json | judge-A + judge-B, independent | none exists — rubric only | manual, template provided | topic-fit.json per rater | ≥3 of 4 criteria met, evidence cited | uncapped | 
+| V-1 | Extract testable success criteria from the event page | agent (WebFetch) + 1 human confirm | WebFetch / curl+pandoc | v1_criteria.sh | criteria.json — 3–5 criteria, each testable, each carrying `criteria_source` | ≥3 criteria, each with a pass condition | unscorable — everything downstream is unscorable without it | 
+| V-2 | Score topic fit against criteria.json | judge-A + judge-B, independent | none exists — rubric only | manual, template provided | topic-fit.json per rater | ≥3 of 4 criteria met, evidence cited | 2/5 when criteria_source=published — advisory otherwise | 
 | V-3 | Offline probe — demo realism | auto | Docker | v3_offline.sh | offline.log, exit code | demo breaks or visibly degrades | 1/5 — staged demo = fail | 
 | V-4 | Credential-removal probe | auto | Docker | v4_no_credentials.sh | no-credentials.log | breaks | 1/5 | 
 | V-5 | Demo-path coverage → executed file set | auto | c8 · coverage.py · go test -cover | v5_demo_path.sh | demo-path.txt | ≥1 file executed outside main/entrypoint | — feeds V-6 | 
@@ -45,6 +45,7 @@ Audit contract, captured from source — see [provenance](README.md#provenance).
 | artifact_source: repo \| submission \| none-declared | V-10 | **most events take the demo through a form, Discord or a gallery field, not the repo.** An artifact absent from the tree is `ABSENT`, not `FAIL`, until the entrant declares none exists |
 | evidence_path | all | a verdict without a stored artifact is not reviewable |
 | blocking: bool | all | declared before the run, never after |
+| criteria_source: published \| inferred \| research-fallback | V-1, V-2 | **the cap on V-2 is only as legitimate as the criteria it scores against.** Published criteria are the event's bar and cap at 2/5; criteria an auditor inferred from a deck, or substituted from the topic's winners, are *our* bar and cannot cap someone else's project |
 | probe_results_withheld_until_scored | V-2 | raters see V-3/V-4/V-6 results after their own scores, not before |
 
 ## Output schema
@@ -114,7 +115,7 @@ rg -n --no-heading '[0-9]+(\.[0-9]+)?\s*(x|%|ms|s|req/s|faster|cheaper)' README.
 | 2 | V-3, V-4, V-9, V-10 (parallel, auto) | V-3 or V-4 fail → Value capped at 1/5 · no reachable demo artifact → capped at 2/5 |
 | 3 | V-5 → V-6 | V-6 ≥20% → capped at 2/5 |
 | 4 | V-8 | claim unreproducible → capped at 3/5 |
-| 5 | V-2, V-7 (two raters, results of 2–4 withheld until scores submitted) | V-7 finds an off-the-shelf equivalent → capped at 2/5 · otherwise final score |
+| 5 | V-2, V-7 (two raters, results of 2–4 withheld until scores submitted) | V-7 finds an off-the-shelf equivalent → capped at 2/5 · V-2 below its bar → capped at 2/5 **only if `criteria_source=published`**, advisory otherwise · otherwise final score |
 
 | Field | Value |
 |---|---|

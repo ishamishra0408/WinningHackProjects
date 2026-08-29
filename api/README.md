@@ -39,6 +39,12 @@ a gallery field, not the repo**, so scanning the README answers a different ques
 | `{"none": true}` | the entrant declares no artifact was submitted → `FAIL` |
 | *omitted* | falls back to a README scan; if that finds nothing → **`ABSENT`, not `FAIL`** |
 
+`criteria_source` decides whether `V-2`'s cap applies at all — `published` · `inferred` ·
+`research-fallback`. **A cap is only as legitimate as the criteria it scores against.** Criteria an
+auditor inferred from a kickoff deck, or substituted from the topic's winners, are *our* bar and
+cannot cap someone else's project, so `V-2` becomes advisory. **Omitted is treated as unknown, and
+an unknown does not cap.**
+
 `window_end` + `window_days` set `window_kind` for `F-2a`. `starter_sha` makes `F-3` measure from
 the **team's** first commit when the event shipped a starter repo. Both optional; without them the
 tasks that need them return `ABSENT`, not a guess.

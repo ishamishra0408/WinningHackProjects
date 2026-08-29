@@ -84,13 +84,24 @@ Each task's `Caps at` cell is the **one home** for what its failure costs: `1/5`
 non-blocking. [`generate-gate.py`](../builder/generate-gate.py) and
 [`api/runners.py`](../api/runners.py) both parse it, so the fact has one home and two readers.
 
-**`V-2` reads `uncapped`, and that is a defect on display rather than a value.** It is marked
-blocking in the source, but no execution-order gate in [value.md](value.md) ever names a cap for
-it. A block with no consequence is not a block. Until it is resolved the API returns
-`cap: "undeterminable"` for the whole Value scope — the state is inert nowhere.
+### Conditional caps, and why `V-2` needed one
 
-Two honest ways out, and **neither is for this repo to pick unilaterally**: give `V-2` a cap in
-value.md's step-5 gate, or demote it to `—` on the grounds that the source never gave it one.
+A cap may carry a condition: `2/5 when criteria_source=published`. **`V-2` is the case that forced
+it.**
+
+`V-2` scores topic fit against `criteria.json`, which `V-1` extracts from the event page. But
+events differ: Neo4j and Qdrant published real criteria with pass conditions, while the Mistral
+event published none — four adjectives from a kickoff deck, which an auditor had to turn into a
+rubric. **Capping a project for missing a bar we inferred is capping it against our bar, not the
+event's.**
+
+So `V-2` caps at 2/5 only when the criteria were **published**, and is advisory when they were
+`inferred` or drawn from the `research-fallback`. `V-1` now records which, in `criteria_source`.
+
+**An unstated provenance does not cap.** An unknown is not a published bar, and the API treats a
+missing `criteria_source` as advisory rather than assuming the strict case.
+
+This is very likely why the source left `V-2` uncapped and never wrote down the reason.
 
 ## Weight provenance — read this before citing a total
 

@@ -36,21 +36,27 @@ VENDORED = re.compile(r"node_modules/|/lib/react|vendor/|dist/|build/|\.min\.|th
 MEASURED, ABSENT, UNEVALUABLE = "MEASURED", "ABSENT", "UNEVALUABLE"
 
 
-CAP_RE = re.compile(r"^\s*(\d)/5|^\s*(unscorable)|^\s*(uncapped)")
+CAP_RE = re.compile(r"^\s*(?:(\d)/5|(unscorable)|(uncapped))"
+                    r"(?:\s+when\s+([a-z_]+)=([a-z-]+))?")
 
 
-def _cap(cell: str) -> tuple[str | None, bool]:
-    """(cap, blocking) from the Caps at column. '2/5' -> ('2/5', True);
-    'unscorable' -> ('unscorable', True); 'uncapped' -> (None, True) and it is a
-    declared defect; '—' -> (None, False)."""
+def _cap(cell: str) -> tuple[str | None, bool, tuple[str, str] | None]:
+    """(cap, blocking, condition) from the Caps at column.
+
+    A cap may be CONDITIONAL: "2/5 when criteria_source=published". V-2 is the
+    case that forced it -- capping a project for missing criteria the auditor
+    inferred from a deck is capping it against our bar, not the event's. When
+    the condition is not met the task is advisory, not blocking.
+    """
     m = CAP_RE.match(cell)
     if not m:
-        return None, False
+        return None, False, None
+    cond = (m.group(4), m.group(5)) if m.group(4) else None
     if m.group(1):
-        return f"{m.group(1)}/5", True
+        return f"{m.group(1)}/5", True, cond
     if m.group(2):
-        return "unscorable", True
-    return None, True
+        return "unscorable", True, cond
+    return None, True, cond
 
 
 def load_weights() -> dict:
@@ -77,12 +83,13 @@ def load_tasks() -> dict[str, dict]:
             cols = [c.strip() for c in m.group(2).split("|")]
             if len(cols) < 7:
                 continue
-            cap, blocking = _cap(cols[6])
+            cap, blocking, cond = _cap(cols[6])
             tasks[m.group(1)] = {
                 "scope": scope,
                 "task": cols[0].split(" — ")[0].strip(),
                 "threshold": cols[5],
                 "cap": cap,
+                "cap_condition": {"field": cond[0], "equals": cond[1]} if cond else None,
                 "blocking": blocking,
             }
     return tasks
@@ -228,9 +235,10 @@ def _demo_artifact(out: dict, set_, readme_text: str, declared: dict | None) -> 
 
 
 def audit_repo(repo_url: str, window_end: str | None = None, window_days: int = 1,
-               starter_sha: str | None = None, demo_artifact: dict | None = None) -> dict:
+               starter_sha: str | None = None, demo_artifact: dict | None = None,
+               criteria_source: str | None = None) -> dict:
     """Run every task computable from a clone. Everything else is UNEVALUABLE."""
-    tasks = load_tasks()
+    tasks = apply_cap_conditions(load_tasks(), {"criteria_source": criteria_source})
     out = {tid: {**meta, "state": UNEVALUABLE, "reason": NEEDS.get(tid, "not implemented"),
                  "value": None, "verdict": None} for tid, meta in tasks.items()}
     tmp = tempfile.mkdtemp(prefix="wh-audit-")
@@ -347,6 +355,28 @@ def audit_repo(repo_url: str, window_end: str | None = None, window_days: int = 
                 "vendored_loc": vendored_loc, "tasks": out}
     finally:
         shutil.rmtree(tmp, ignore_errors=True)
+
+
+def apply_cap_conditions(tasks: dict, context: dict | None) -> dict:
+    """Demote conditional caps whose condition the audit context does not meet.
+
+    Called before summarise(). A conditional cap with no context is NOT applied:
+    an unstated provenance is unknown, and an unknown must not cap someone's
+    project.
+    """
+    context = context or {}
+    for tid, t in tasks.items():
+        cond = t.get("cap_condition")
+        if not cond:
+            continue
+        met = context.get(cond["field"]) == cond["equals"]
+        t["cap_condition_met"] = met
+        if not met:
+            t["cap"], t["blocking"] = None, False
+            t["cap_demoted_because"] = (
+                f"cap applies only when {cond['field']}={cond['equals']}; "
+                f"got {context.get(cond['field']) or 'nothing supplied'} -- advisory here")
+    return tasks
 
 
 def summarise(tasks: dict) -> dict:
