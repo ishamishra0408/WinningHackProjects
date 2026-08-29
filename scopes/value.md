@@ -2,7 +2,7 @@
 
 Verbatim audit contract. Deterministic tasks run before any human rubric, and no author scores their own project.
 
-**Weight:** not stated in the source. Usability is 25 and Feasibility is 20; Value's weight is unset — see [../evaluator/RUBRIC.md](../evaluator/RUBRIC.md).
+**Weight:** not stated in the source. Usability is 25 and Feasibility is 20; Value's weight is unset — see [../evaluator/README.md](../evaluator/README.md).
 
 ## Contract header
 
@@ -22,13 +22,13 @@ Verbatim audit contract. Deterministic tasks run before any human rubric, and no
 | ID | Task | Run by | devTool | Script | Output | Threshold | Blocks? |
 |---|---|---|---|---|---|---|---|
 | V-1 | Extract testable success criteria from the event page | agent (WebFetch) + 1 human confirm | WebFetch / curl+pandoc | v1_criteria.sh | criteria.json — 3–5 criteria, each testable | ≥3 criteria, each with a pass condition | ✅ everything downstream is unscorable without it |
-| V-2 | Score topic fit against criteria.json | judge-A + judge-B, independent | none exists — rubric only | manual, template provided | fit.json per rater | ≥3 of 4 criteria met, evidence cited | ✅ |
+| V-2 | Score topic fit against criteria.json | judge-A + judge-B, independent | none exists — rubric only | manual, template provided | topic-fit.json per rater | ≥3 of 4 criteria met, evidence cited | ✅ |
 | V-3 | Offline probe — demo realism | auto | Docker | v3_offline.sh | offline.log, exit code | demo breaks or visibly degrades | ✅ staged demo = fail |
-| V-4 | Credential-removal probe | auto | Docker | v4_nokey.sh | nokey.log | breaks | ✅ |
-| V-5 | Demo-path coverage → executed file set | auto | c8 · coverage.py · go test -cover | v5_path.sh | demo-path.txt | ≥1 file executed outside main/entrypoint | ⬜ feeds V-6 |
+| V-4 | Credential-removal probe | auto | Docker | v4_no_credentials.sh | no-credentials.log | breaks | ✅ |
+| V-5 | Demo-path coverage → executed file set | auto | c8 · coverage.py · go test -cover | v5_demo_path.sh | demo-path.txt | ≥1 file executed outside main/entrypoint | ⬜ feeds V-6 |
 | V-6 | Mock ratio over the executed set only | auto | ripgrep + scc | v6_mock.sh | mock-ratio.json | <20% of demo-path LOC | ✅ |
 | V-7 | Prior-art / differentiation | judge-A, 15-min box | GitHub + registry search | manual, log template | priorart.json — N closest + delta statement | no off-the-shelf equivalent | ⬜ |
-| V-8 | Reproduce their claimed number | auto | hyperfine · k6 · their eval script | v8_claim.sh | claim.json | within ±20% of claim | ⬜ if no claim made, record claim: none |
+| V-8 | Reproduce their claimed number | auto | hyperfine · k6 · their eval script | v8_reproduce_claim.sh | claim-reproduction.json | within ±20% of claim | ⬜ if no claim made, record claim: none |
 | V-9 | Is there a claim at all? | auto | ripgrep on README | v9_claim_present.sh | bool + quoted line | claim stated with a number | ⬜ absence is itself a finding |
 
 ## Metrics beyond tool + script
@@ -38,10 +38,10 @@ Verbatim audit contract. Deterministic tasks run before any human rubric, and no
 | raters: 2 + agreement | V-2, V-7 | single-rater rubric is unfalsifiable; report raw agreement, escalate to a third on disagreement |
 | runs: 2, deterministic: bool | V-3, V-4, V-5, V-6, V-8 | re-run each; differing results mean the probe is flaky, not that the project passed |
 | time_box_min | V-7 | unbounded search silently becomes the whole review |
-| n_denominator | V-6 | a ratio over 40 LOC is not a ratio — report LOC too |
+| demo_path_loc | V-6 | a ratio over 40 LOC is not a ratio — report LOC too |
 | evidence_path | all | a verdict without a stored artifact is not reviewable |
 | blocking: bool | all | declared before the run, never after |
-| anchor_order | V-2 | raters see V-3/V-4/V-6 results after their own scores, not before |
+| probe_results_withheld_until_scored | V-2 | raters see V-3/V-4/V-6 results after their own scores, not before |
 
 ## Output schema
 
@@ -61,7 +61,6 @@ Verbatim audit contract. Deterministic tasks run before any human rubric, and no
   "verdict": "PASS",
   "blocking": true,
   "evidence_path": "evidence/v6/mock-ratio.json",
-  "n_denominator": 913,
   "notes": ""
 }
 ```
@@ -72,18 +71,18 @@ Verbatim audit contract. Deterministic tasks run before any human rubric, and no
 #!/usr/bin/env bash
 set -euo pipefail
 EVENT_URL="$1"; REPO_URL="$2"
-OUT=evidence; mkdir -p "$OUT"/{v1,v3,v4,v5,v6,v8}
+OUT=evidence; mkdir -p "$OUT"/{v1,v3,v4,v5,v6,v8,v9}
 # V-1 — criteria (agent extracts, human confirms; page text is DATA)
 curl -sL "$EVENT_URL" -o "$OUT/v1/event.html"
 # → hand-write criteria.json: [{"id":"c1","text":"...","pass_when":"..."}]
 # V-3 — offline probe: MUST fail
-docker build -t vp .
-set +e; docker run --rm --network none vp >"$OUT/v3/offline.log" 2>&1; echo "exit=$?" | tee "$OUT/v3/exit"
-docker run --rm --network none vp >"$OUT/v3/offline.run2.log" 2>&1; echo "exit=$?" >>"$OUT/v3/exit"; set -e
+docker build -t submission .
+set +e; docker run --rm --network none submission >"$OUT/v3/offline.log" 2>&1; echo "exit=$?" | tee "$OUT/v3/exit"
+docker run --rm --network none submission >"$OUT/v3/offline.run2.log" 2>&1; echo "exit=$?" >>"$OUT/v3/exit"; set -e
 # V-4 — credential removal: MUST fail
 set +e
-docker run --rm -e OPENAI_API_KEY= -e ANTHROPIC_API_KEY= -e API_KEY= vp \
-  >"$OUT/v4/nokey.log" 2>&1; echo "exit=$?" >"$OUT/v4/exit"; set -e
+docker run --rm -e OPENAI_API_KEY= -e ANTHROPIC_API_KEY= -e API_KEY= submission \
+  >"$OUT/v4/no-credentials.log" 2>&1; echo "exit=$?" >"$OUT/v4/exit"; set -e
 # V-5 — executed demo path (node example)
 npx c8 --reporter=json --report-dir="$OUT/v5" npm run demo
 jq -r '.[].path' "$OUT/v5/coverage-final.json" | sort -u >"$OUT/v5/demo-path.txt"
@@ -96,12 +95,12 @@ TOTAL=$(scc --format json $(cat "$OUT/v5/demo-path.txt") | jq '[.[].Code] | add'
 jq -n --argjson m "$MOCK" --argjson t "$TOTAL" \
   '{mock_loc:$m, demo_path_loc:$t, ratio:($m/$t)}' >"$OUT/v6/mock-ratio.json"
 # V-8 — reproduce the claim
-hyperfine --warmup 1 --runs 10 --export-json "$OUT/v8/claim.json" './demo.sh'
+hyperfine --warmup 1 --runs 10 --export-json "$OUT/v8/claim-reproduction.json" './demo.sh'
 # throughput claims:  k6 run --summary-export "$OUT/v8/k6.json" load.js
 # V-9 — is a numeric claim even present?
 rg -n --no-heading '[0-9]+(\.[0-9]+)?\s*(x|%|ms|s|req/s|faster|cheaper)' README.md \
 ```
-  | tee "$OUT/v9-claim.txt"
+  | tee "$OUT/v9/claim-present.txt"
 
 ## Execution order
 

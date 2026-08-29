@@ -54,7 +54,7 @@ budget accordingly.
 
 ## Choosing what to build
 
-From auditing the winners in [../data/winners-top3.md](../data/winners-top3.md), two patterns
+From auditing the winners in [../research/winners-top3.md](../research/winners-top3.md), two patterns
 show up repeatedly in the events that published their reasoning:
 
 - **The constraint is the competition.** Qdrant banned RAG and chatbots outright; Neo4j

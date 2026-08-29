@@ -21,19 +21,19 @@ Core finding that shapes the contract: git author/committer dates are trivially 
 
 | ID | Task | Run by | devTool | Script | Output | Threshold | Blocks? |
 |---|---|---|---|---|---|---|---|
-| F-1 | Fix the window — start/end/TZ + entrant roster | judge, from event page | WebFetch | f1_window.sh | window.json | both timestamps + roster present | ✅ |
+| F-1 | Fix the window — start/end/TZ + entrant roster | judge, from event page | WebFetch | f1_window.sh | window-and-roster.json | both timestamps + roster present | ✅ |
 | F-2a | Claimed timeline | auto | git log | f2_timeline.sh | commit histogram | ≥80% inside window | ⬜ claimed only |
 | F-2b | Observed timeline — server push events | auto | gh api .../events | f2_timeline.sh | push-events.json | ≥80% inside window | ✅ authoritative |
 | F-2c | Tamper check — author vs committer date drift | auto | git log --format='%ad %cd' | f2_timeline.sh | date-drift.txt | drift <1h on ≥90% of commits | ✅ mismatch with F-2b = rewritten history |
-| F-3 | Opening-commit mass | auto | git log --numstat | f3_dump.sh | first-commit LOC share | <50% of final LOC | ✅ |
+| F-3 | Opening-commit mass | auto | git log --numstat | f3_opening_commit_mass.sh | first-commit LOC share | <50% of final LOC | ✅ |
 | F-4 | Author roster match | auto | git shortlog -sne + Co-authored-by trailers | f4_authors.sh | authors.json | every author on roster | ✅ |
 | F-5 | Effort plausibility | auto | scc (COCOMO dev-months) | f5_effort.sh | effort.json | ≲3× available person-hours | ⬜ advisory only |
-| F-6 | Comprehension probe — 3 randomly picked functions, author explains + predicts output | judge, live, seeded random | ripgrep + shuf --random-source | f6_probe.sh | comprehension.json | 3/3 explained, ≥2/3 output predicted | ✅ the real authorship test |
+| F-6 | Comprehension probe — 3 randomly picked functions, author explains + predicts output | judge, live, seeded random | ripgrep + shuf --random-source | f6_comprehension_probe.sh | comprehension.json | 3/3 explained, ≥2/3 output predicted | ✅ the real authorship test |
 | F-7 | Builds from clean clone | auto | Docker | f7_build.sh | exit code | exits 0 | ✅ |
 | F-8 | Runs off the author's machine | auto | Docker / Actions runner | f7_build.sh | run log | payoff reached in neutral env | ✅ |
 | F-9 | CI present + green | auto | gh run list | f9_ci.sh | run history | present, >85% green | ⬜ |
 | F-10 | Lockfile integrity | auto | npm ci · pip-compile --generate-hashes · go mod verify · cargo --locked | f10_lock.sh | exit code | exits 0 | ✅ |
-| F-11 | Complexity wall | auto | scc --by-file · CodeScene | f11_hotspot.sh | hotspots.json | no file >30% of LOC | ⬜ |
+| F-11 | Single-file LOC share | auto | scc --by-file · CodeScene | f11_file_loc_share.sh | file-loc-shares.json | no file >30% of LOC | ⬜ |
 | F-12 | Cadence shape | auto | git log histogram | f2_timeline.sh | per-hour commit counts | ≥8 distinct commit hours | ⬜ one dump = F-3 signal |
 
 ## Metrics beyond tool + script
@@ -75,13 +75,13 @@ Core finding that shapes the contract: git author/committer dates are trivially 
 ```bash
 #!/usr/bin/env bash
 set -euo pipefail
-O=owner; R=repo; START=2026-08-15T09:00:00Z; END=2026-08-17T17:00:00Z
-OUT=evidence; mkdir -p "$OUT"/{f2,f3,f4,f5,f6,f7,f9,f11}
-git clone "https://github.com/$O/$R" src && cd src
+OWNER=owner; REPO=repo; START=2026-08-15T09:00:00Z; END=2026-08-17T17:00:00Z
+OUT=evidence; mkdir -p "$OUT"/{f1,f2,f3,f4,f5,f6,f7,f9,f11}
+git clone "https://github.com/$OWNER/$REPO" src && cd src
 # ---------- F-2b: AUTHORITATIVE timeline (server-side, unforgeable) ----------
-gh api "repos/$O/$R/events" --paginate \
+gh api "repos/$OWNER/$REPO/events" --paginate \
   --jq '.[] | select(.type=="PushEvent") | .created_at' > "../$OUT/f2/push-events.json"
-gh api "repos/$O/$R" --jq '{created_at,pushed_at,default_branch}' > "../$OUT/f2/repo-meta.json"
+gh api "repos/$OWNER/$REPO" --jq '{created_at,pushed_at,default_branch}' > "../$OUT/f2/repo-meta.json"
 # ---------- F-2a: claimed timeline ----------
 git log --format='%ad' --date=iso-strict | sort > "../$OUT/f2/git-dates.txt"
 awk -v s="$START" -v e="$END" '$0>=s && $0
@@ -126,9 +126,9 @@ rg -n --no-heading -e '^\s*(export\s+)?(async\s+)?function\s+\w+' \
 
 # ---------- F-7 / F-8: clean build, neutral environment, twice ----------
 
-for i in 1 2; do docker build --no-cache -t "feas:$i" . ; done
+for i in 1 2; do docker build --no-cache -t "submission:$i" . ; done
 
-docker run --rm feas:1 2>&1 | tee "../$OUT/f7/neutral-run.log"
+docker run --rm submission:1 2>&1 | tee "../$OUT/f7/neutral-run.log"
 
 # ---------- F-10: lockfile integrity ----------
 
@@ -142,7 +142,7 @@ test -f requirements.txt && pip install --require-hashes -r requirements.txt
 
 # ---------- F-9 / F-11 ----------
 
-gh run list -R "$O/$R" -L 100 --json conclusion --jq '.[].conclusion' | sort | uniq -c
+gh run list -R "$OWNER/$REPO" -L 100 --json conclusion --jq '.[].conclusion' | sort | uniq -c
 
 scc --by-file --format json . | jq 'sort_by(-.Code) | .[0:5]'
 

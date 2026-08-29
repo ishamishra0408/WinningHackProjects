@@ -9,6 +9,18 @@ blocking tasks that cap the score regardless of how well everything else went.
 | **Usability** | 25 | Can a stranger reach the payoff from a cold clone? | [usability.md](usability.md) |
 | **Feasibility** | 20 | Was it actually built, by these people, in this window? | [feasibility.md](feasibility.md) |
 
+## Reading the task IDs
+
+`V-…`, `U-…` and `F-…` are verbatim source keys, not descriptive names, and are deliberately
+left unrenamed — they are the join key between these contracts, the
+[builder](../builder/README.md), the [run order](../evaluator/README.md) and every filled
+scorecard, and renaming them would desync all four from the source.
+
+They are opaque on their own, so they get exactly one decoder: the requirement column of
+[../evaluator/scorecard-TEMPLATE.md](../evaluator/scorecard-TEMPLATE.md), which lists all 35 IDs
+with their plain-language requirement. Cite an ID anywhere else and gloss it inline; do not
+start a second index.
+
 ## What makes these contracts rather than checklists
 
 Three properties recur across all three, and they're the reason the model works:

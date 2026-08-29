@@ -1,6 +1,6 @@
 # Evaluator — scoring a won project
 
-Point this at any winning project from [../data/winners-top3.md](../data/winners-top3.md) and
+Point this at any winning project from [../research/winners-top3.md](../research/winners-top3.md) and
 get a defensible /5 per scope plus one overall verdict.
 
 **Inputs:** `event_url` (the event page — theme, prompt, published criteria) and `repo_url`.
