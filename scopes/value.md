@@ -30,7 +30,7 @@ Audit contract, captured from source — see [provenance](README.md#provenance).
 | V-7 | Prior-art / differentiation | judge-A, 15-min box | GitHub + registry search | manual, log template | priorart.json — N closest + delta statement | no off-the-shelf equivalent | ✅ |
 | V-8 | Reproduce their claimed number | auto | hyperfine · k6 · their eval script | v8_reproduce_claim.sh | claim-reproduction.json | within ±20% of claim | ⬜ if no claim made, record claim: none |
 | V-9 | Is there a claim at all? | auto | ripgrep on README | v9_claim_present.sh | bool + quoted line | claim stated with a number | ⬜ advisory — 6 of 28 winners pass; kept only because V-8 needs the claim |
-| V-10 | Demo artifact — the thing judges actually watch | auto | ripgrep + HTTP HEAD | v10_demo_artifact.sh | demo-artifact.json — kind, duration, reachable | present and reachable | ✅ |
+| V-10 | Demo artifact — the thing judges actually watch, wherever it was submitted | auto | ripgrep + HTTP HEAD + container probe | v10_demo_artifact.sh | demo-artifact.json — kind, source, duration, reachable | present and reachable | ✅ |
 
 ## Metrics beyond tool + script
 
@@ -42,6 +42,7 @@ Audit contract, captured from source — see [provenance](README.md#provenance).
 | demo_path_loc | V-6 | a ratio over 40 LOC is not a ratio — report LOC too |
 | vendored_loc | V-6 | checked-in dependencies are not the team's code and must leave the denominator |
 | artifact_kind, duration_s | V-10 | a video, a deck or a live URL are different evidence; record which, and how long |
+| artifact_source: repo \| submission \| none-declared | V-10 | **most events take the demo through a form, Discord or a gallery field, not the repo.** An artifact absent from the tree is `ABSENT`, not `FAIL`, until the entrant declares none exists |
 | evidence_path | all | a verdict without a stored artifact is not reviewable |
 | blocking: bool | all | declared before the run, never after |
 | probe_results_withheld_until_scored | V-2 | raters see V-3/V-4/V-6 results after their own scores, not before |

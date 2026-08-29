@@ -24,9 +24,20 @@ curl -X POST localhost:8000/evaluateproject -H 'Content-Type: application/json' 
   "repo_url": "https://github.com/owner/repo",
   "window_end": "2026-08-22",
   "window_days": 1,
-  "starter_sha": "857113ee"
+  "starter_sha": "857113ee",
+  "demo_artifact": {"path": "./demo.webm", "kind": "video"}
 }'
 ```
+
+`demo_artifact` resolves `V-10`. **Most events take the demo through a submission form, Discord or
+a gallery field, not the repo**, so scanning the README answers a different question. Pass one of:
+
+| | Result |
+|---|---|
+| `{"url": "https://..."}` | HEAD-checked. Reachable → `PASS`; 404 → `FAIL`; **a blocked check (403/407/timeout) → `UNEVALUABLE`**, because that is a fact about the instrument |
+| `{"path": "./demo.webm"}` | existence + size + `duration_s` parsed from the WebM or MP4 header |
+| `{"none": true}` | the entrant declares no artifact was submitted → `FAIL` |
+| *omitted* | falls back to a README scan; if that finds nothing → **`ABSENT`, not `FAIL`** |
 
 `window_end` + `window_days` set `window_kind` for `F-2a`. `starter_sha` makes `F-3` measure from
 the **team's** first commit when the event shipped a starter repo. Both optional; without them the
@@ -95,7 +106,8 @@ score and the response says so.
 | Limit | Consequence |
 |---|---|
 | `F-2a` is computed at **day** granularity | an event with an hours-long submission deadline needs the finer window; the day figure is optimistic |
-| `V-10` only sees media referenced **in the README** | a video submitted to Discord or a form is invisible and reads `FAIL` |
+| `V-10` cannot discover a submission on its own | it reads the repo, or what you declare — an artifact you neither commit nor declare is `ABSENT` |
+| `duration_s` covers WebM and MP4 only | other containers return `null`, not a failure |
 | `F-4` cannot verify a roster | always `ABSENT` until `F-1` supplies one |
 | 10 Usability tasks need an operator or container | always `UNEVALUABLE` here |
 | No auth, no rate limit, single host | localhost only |

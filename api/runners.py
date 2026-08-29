@@ -87,8 +87,116 @@ def _loc(repo: str, files: list[str]) -> int:
     return total
 
 
+# ---- V-10 -------------------------------------------------------------------
+# Most events take the demo through a submission form, Discord or a gallery
+# field -- not the repo. Scanning only the README answers "is it in the tree",
+# which is a different question and the reason V-10 read FAIL on a project whose
+# video was submitted and accepted.
+MEDIA_IN_README = re.compile(r"!\[|<img|youtu\.be|youtube\.com|loom\.com|vimeo|\.mp4|\.webm|\.gif", re.I)
+
+
+def _media_duration(path: pathlib.Path) -> float | None:
+    """Duration from a WebM/Matroska or MP4 header. None when unreadable."""
+    try:
+        head = path.open("rb").read(400_000)
+    except OSError:
+        return None
+    if head[:4] == b"\x1a\x45\xdf\xa3":                      # EBML / WebM
+        scale, i = 1_000_000, 0
+        while i < len(head) - 8:
+            if head[i:i + 3] == b"\x2a\xd7\xb1":              # TimecodeScale
+                n = head[i + 3] & 0x7F
+                scale = int.from_bytes(head[i + 4:i + 4 + n], "big") or scale
+                i += 3
+            elif head[i:i + 2] == b"\x44\x89":                 # Duration (float)
+                n = head[i + 2] & 0x7F
+                raw = head[i + 3:i + 3 + n]
+                try:
+                    import struct
+                    return round(struct.unpack(">f" if n == 4 else ">d", raw)[0] * scale / 1e9, 1)
+                except Exception:
+                    return None
+            i += 1
+    j = head.find(b"mvhd")                                     # MP4
+    if j != -1:
+        try:
+            ts = int.from_bytes(head[j + 12:j + 16], "big")
+            units = int.from_bytes(head[j + 16:j + 20], "big")
+            return round(units / ts, 1) if ts else None
+        except Exception:
+            return None
+    return None
+
+
+def _reachable(url: str) -> tuple[bool | None, str]:
+    """(True, ''), (False, reason) or (None, reason) when the CHECK itself failed.
+
+    None is not a failure of the artifact -- a proxy 403 or a DNS error is a fact
+    about the instrument, and must not render as a missing demo.
+    """
+    import urllib.error
+    import urllib.request
+    req = urllib.request.Request(url, method="HEAD", headers={"User-Agent": "winninghack/1.0"})
+    try:
+        with urllib.request.urlopen(req, timeout=15) as resp:
+            return (200 <= resp.status < 400), f"HTTP {resp.status}"
+    except urllib.error.HTTPError as exc:
+        if exc.code in (403, 405, 407, 429):
+            return None, f"HTTP {exc.code} -- reachability check blocked, not the artifact"
+        return False, f"HTTP {exc.code}"
+    except Exception as exc:
+        return None, f"check failed: {type(exc).__name__}"
+
+
+def _demo_artifact(out: dict, set_, readme_text: str, declared: dict | None) -> None:
+    """A declared submission outranks the README; neither found is ABSENT, not FAIL."""
+    def finish(state, value, verdict, reason=None):
+        out["V-10"].update(state=state, value=value, verdict=verdict, reason=reason)
+
+    if declared:
+        if declared.get("none"):
+            finish(MEASURED, {"artifact_source": "none-declared"}, "FAIL",
+                   None)
+            return
+        url = declared.get("url")
+        path = declared.get("path")
+        kind = declared.get("kind") or ("video" if (url or path) else None)
+        if path:
+            f = pathlib.Path(path)
+            if not f.exists():
+                finish(UNEVALUABLE, {"artifact_source": "submission", "path": path},
+                       None, "declared file not readable from here")
+                return
+            finish(MEASURED, {"artifact_source": "submission", "artifact_kind": kind,
+                              "path": path, "bytes": f.stat().st_size,
+                              "duration_s": _media_duration(f)}, "PASS")
+            return
+        if url:
+            ok, why = _reachable(url)
+            if ok is None:
+                finish(UNEVALUABLE, {"artifact_source": "submission", "url": url,
+                                     "artifact_kind": kind}, None, why)
+            else:
+                finish(MEASURED, {"artifact_source": "submission", "url": url,
+                                  "artifact_kind": kind, "reachable": ok,
+                                  "detail": why, "duration_s": None},
+                       "PASS" if ok else "FAIL")
+            return
+
+    hits = MEDIA_IN_README.findall(readme_text or "")
+    if hits:
+        finish(MEASURED, {"artifact_source": "repo", "artifact_kind": "in-readme",
+                          "references": len(hits), "duration_s": None}, "PASS")
+    else:
+        finish(ABSENT, {"artifact_source": None},
+               None,
+               "no artifact in the repo and none declared -- most events take the demo "
+               "through a form, Discord or a gallery field. Pass demo_artifact "
+               "{url|path|none:true} to resolve this.")
+
+
 def audit_repo(repo_url: str, window_end: str | None = None, window_days: int = 1,
-               starter_sha: str | None = None) -> dict:
+               starter_sha: str | None = None, demo_artifact: dict | None = None) -> dict:
     """Run every task computable from a clone. Everything else is UNEVALUABLE."""
     tasks = load_tasks()
     out = {tid: {**meta, "state": UNEVALUABLE, "reason": NEEDS.get(tid, "not implemented"),
@@ -193,15 +301,13 @@ def audit_repo(repo_url: str, window_end: str | None = None, window_days: int = 
         readme = next((f for f in files if f.lower().startswith("readme")), None)
         text = (pathlib.Path(repo) / readme).read_text(encoding="utf-8", errors="ignore") if readme else ""
         if readme is None:
-            for tid in ("V-9", "V-10", "U-4"):
+            for tid in ("V-9", "U-4"):
                 out[tid].update(state=ABSENT, reason="no README in the repository")
+            _demo_artifact(out, None, "", demo_artifact)
         else:
             claim = re.search(r"\d+(?:\.\d+)?\s*(?:x\b|%|ms|req/s|faster|cheaper)", text)
             set_("V-9", {"claim": claim.group(0) if claim else None}, bool(claim))
-            media = re.findall(r"!\[|<img|youtu\.be|youtube\.com|loom\.com|\.mp4|\.webm|\.gif", text, re.I)
-            set_("V-10", {"artifact_kind": "in-readme" if media else None,
-                          "references": len(media), "duration_s": None},
-                 bool(media))
+            _demo_artifact(out, set_, text, demo_artifact)
             oneclick = [f for f in files if f in ("Dockerfile", "docker-compose.yml", ".devcontainer/devcontainer.json")]
             set_("U-4", {"entrypoints": oneclick}, bool(oneclick))
 

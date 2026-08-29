@@ -87,6 +87,7 @@ class Handler(BaseHTTPRequestHandler):
             window_end=body.get("window_end"),
             window_days=int(body.get("window_days") or 1),
             starter_sha=body.get("starter_sha"),
+            demo_artifact=body.get("demo_artifact"),
         )
         if "error" in result and "tasks" not in result:
             self._send(502, result)
