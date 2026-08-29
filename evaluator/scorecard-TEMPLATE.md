@@ -36,7 +36,8 @@ implemented it → proof.
 | V-6 | mock ratio <20% of demo-path LOC | | | | |
 | V-7 | no off-the-shelf equivalent | | | | |
 | V-8 | claimed number within ±20% | | | | |
-| V-9 | numeric claim present at all | | | | |
+| V-9 | numeric claim present at all *(advisory)* | | | | |
+| V-10 | demo artifact present and reachable | | | | |
 
 ### Usability
 | ID | Requirement | Tested? | Achieved | How they implemented it | Proof |

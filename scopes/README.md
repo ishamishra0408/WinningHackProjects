@@ -17,7 +17,7 @@ left unrenamed — they are the join key between these contracts, the
 scorecard, and renaming them would desync all four from the source.
 
 They are opaque on their own, so they get exactly one decoder: the requirement column of
-[../evaluator/scorecard-TEMPLATE.md](../evaluator/scorecard-TEMPLATE.md), which lists all 35 IDs
+[../evaluator/scorecard-TEMPLATE.md](../evaluator/scorecard-TEMPLATE.md), which lists all 36 IDs
 with their plain-language requirement. Cite an ID anywhere else and gloss it inline; do not
 start a second index.
 

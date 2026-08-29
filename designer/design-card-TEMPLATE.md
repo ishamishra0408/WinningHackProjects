@@ -27,6 +27,7 @@ valid answer; a blank cell is not.
 |---|---|---|---|---|
 | `D5` | payoff in one sentence, observable without you | | | write the sentence here |
 | `D10` | the number we intend to claim | | | **declared before building** |
+| `D19` | who records the demo video, and when | | | not the last hour |
 | `D14` | committed build start ≥ window open | | | |
 | `D15` | prior/starter code LOC we will import | | | declare it or `F-3` is unarguable |
 

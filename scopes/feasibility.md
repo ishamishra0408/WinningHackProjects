@@ -2,6 +2,10 @@
 
 Audit contract, captured from source — see [provenance](README.md#provenance). **Weight: 20.**
 
+**This scope is forensic build-verification — *was it built, by these people, in this window*. It is
+not the "feasibility" of a judging rubric, which asks whether a thing can be built and scaled.
+Same word, opposite tense; do not pool the two.**
+
 Core finding that shapes the contract: git author/committer dates are trivially forgeable, so the timeline must come from GitHub's server-side record, not the clone.
 
 ## Contract header
@@ -21,11 +25,11 @@ Core finding that shapes the contract: git author/committer dates are trivially 
 
 | ID | Task | Run by | devTool | Script | Output | Threshold | Blocks? |
 |---|---|---|---|---|---|---|---|
-| F-1 | Fix the window — start/end/TZ + entrant roster | judge, from event page | WebFetch | f1_window.sh | window-and-roster.json | both timestamps + roster present | ✅ |
+| F-1 | Fix the window — start/end/TZ + shape + entrant roster | judge, from event page | WebFetch | f1_window.sh | window-and-roster.json | both timestamps, window_kind, and roster present | ✅ |
 | F-2a | Claimed timeline | auto | git log | f2_timeline.sh | commit histogram | ≥80% inside window | ⬜ claimed only |
 | F-2b | Observed timeline — server push events | auto | gh api .../events | f2_timeline.sh | push-events.json | ≥80% inside window | ✅ authoritative |
 | F-2c | Tamper check — author vs committer date drift | auto | git log --format='%ad %cd' | f2_timeline.sh | date-drift.json | drift <1h on ≥90% of commits | ✅ mismatch with F-2b = rewritten history |
-| F-3 | Opening-commit mass | auto | git log --numstat | f3_opening_commit_mass.sh | first-commit LOC share | <50% of final LOC | ✅ |
+| F-3 | Opening-commit mass, over the team's own first commit | auto | git log --numstat | f3_opening_commit_mass.sh | first-commit LOC share | <50% of final LOC | ✅ |
 | F-4 | Author roster match | auto | git shortlog -sne + Co-authored-by trailers | f4_authors.sh | authors.json | every author on roster | ✅ |
 | F-5 | Effort plausibility | auto | scc (COCOMO dev-months) | f5_effort.sh | effort.json | ≲3× available person-hours | ⬜ advisory only |
 | F-6 | Comprehension probe — 3 randomly picked functions, author explains + predicts output | judge, live, seeded random | ripgrep + shuf --random-source | f6_comprehension_probe.sh | comprehension.json | 3/3 explained, ≥2/3 output predicted | ✅ the real authorship test |
@@ -46,6 +50,9 @@ Core finding that shapes the contract: git author/committer dates are trivially 
 | ai_disclosed: bool | F-5, F-6 | if the event required disclosure, undisclosed heavy codegen is a rules issue, not a feasibility one |
 | probe_seed | F-6 | random selection must be reproducible or the author can dispute the picks |
 | probe_live: true, author_present: true | F-6 | the only task where the author's presence is required, not disqualifying |
+| window_kind: single-day \| multi-day \| multi-week | F-1, F-2a, F-2b | a 5-week window and a 7-hour window are different questions under one threshold |
+| starter_sha | F-3 | when the event ships a starter repo, the opening commit is the organizers'; measure from the team's first commit after it |
+| vendored_loc | F-3, F-5, F-11 | checked-in dependencies are not the team's code and must leave every LOC denominator |
 | commits_total | F-2c | the threshold is a share, not a count — a violation count without the commit total is not a share |
 | runs: 2 | F-7, F-10 | a build that passes once and fails once is a fail |
 | squash_merged: bool | F-4 | squash rewrites authorship — fall back to Co-authored-by trailers and PR authorship |

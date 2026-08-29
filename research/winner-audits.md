@@ -117,6 +117,26 @@ seven days late.
 | media in the README (image, GIF or video) | 10 / 28 (36%) |
 | a numeric claim in the README | 6 / 28 (21%) |
 
+## What changed in the contracts because of this
+
+Applied, with two external rubrics as corroboration — the hacktribe blueprint (Innovation 25 ·
+Technical execution 25 · Impact & feasibility 25 · Presentation & demo 15 · Theme/sponsor 10) and
+Derrell's PRIME (Problem · Real-world impact · Implementation · Messaging · Execution potential).
+
+| Change | Evidence |
+|---|---|
+| **`V-10` added** — demo artifact present and reachable, blocking | Presentation & demo is 15% of one rubric and 1 of 5 PRIME letters; the repo had **no task for either**. The Mistral event judged a demo video plus two 5-minute pitches. |
+| **`V-7` promoted to blocking** | "Innovation & originality" is a joint-heaviest 25% criterion. `V-7` was its only counterpart, non-blocking, and NOT-CHECKED in all 28 audits. |
+| **`V-9` demoted to advisory** | 6 of 28 winners pass, and neither rubric asks for a numeric claim. Kept only because `V-8` needs the claim to reproduce. |
+| **`vendored_loc`** on `F-3` `F-5` `F-11` `V-6` | fault 1 above |
+| **`starter_sha`** on `F-3` | fault 2 above |
+| **`window_kind`** on `F-1` `F-2a` `F-2b` | fault 3 above |
+| **Feasibility restated** as forensic build-verification | the rubrics' "feasibility" asks whether a thing *can* be built; this scope asks whether it *was*. Two instruments, one name. |
+
+Still open: neither rubric's **Impact** criterion (25% + 2 of 5 PRIME letters) has any task. That is
+a deliberate omission, not an oversight — it is a judgment about the product, and nothing in a repo
+measures it.
+
 ## What this does NOT establish
 
 **28 winners, 0 losers.** The set is selected on the outcome, so no shared trait here is evidence

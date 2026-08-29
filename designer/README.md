@@ -1,10 +1,10 @@
 # Designer — deciding what to build, before there is anything to audit
 
 The [scopes](../scopes/README.md) audit a finished repo. Every one of their tasks needs the
-artefact to exist. Given only a Luma event page and an idea, **29 of the 35 are ABSENT — a fact
+artefact to exist. Given only a Luma event page and an idea, **30 of the 36 are ABSENT — a fact
 about the subject, not a failure of the project.**
 
-This layer is the other direction: the 18 checks that *can* run at t=0, each one buying a specific
+This layer is the other direction: the 19 checks that *can* run at t=0, each one buying a specific
 ex-post task you would otherwise discover too late to fix.
 
 Task IDs below are cited bare. Their plain-language requirements live in one place —
@@ -15,7 +15,7 @@ the requirement column of [../evaluator/scorecard-TEMPLATE.md](../evaluator/scor
 | | `D` — design-time *(this layer)* | `A` — audit-time *([evaluator](../evaluator/README.md))* |
 |---|---|---|
 | Input | event page + your plan | the built repo |
-| Rows | 18 | 35 |
+| Rows | 19 | 36 |
 | Answers | *what do I build, and will it clear the bar* | *did it hold up* |
 | Solve for | **your plan** | nothing — read-only |
 
@@ -30,10 +30,10 @@ have been scheduled.
 | **STRONG** | mechanically checkable from the event page and the plan, no judgment |
 | **WEAK** | a declaration you make now and cannot verify until later — report it as a declaration, never as a measurement |
 
-13 of 18 are STRONG. Those are the deterministic core: the same event page and the same plan
+14 of 19 are STRONG. Those are the deterministic core: the same event page and the same plan
 produce the same answer.
 
-## Value — 7 rows, covering all 9 Value tasks
+## Value — 8 rows, covering all 10 Value tasks
 
 | Row | Check at t=0 | Buys | Strength |
 |---|---|---|---|
@@ -44,6 +44,7 @@ produce the same answer.
 | `D8` | demo crosses a module boundary — ≥2 planned files on the demo path | `V-5` | STRONG |
 | `D9` | every planned stub on the demo path has a scheduled replacement slot | `V-6` | WEAK |
 | `D10` | the number you intend to claim is written down **before** building | `V-8` `V-9` | STRONG |
+| `D19` | a slot for recording the demo video or deck is in the plan, before the last hour | `V-10` | STRONG |
 
 `D10` is free and it is the one people skip. A claim declared after the measurement is a claim
 chosen to pass.
@@ -116,7 +117,7 @@ ABSENT, `D2` is undefined rather than zero — fall back to the topic's patterns
 | Step | Rows | Gate |
 |---|---|---|
 | 1 | `D1` `D13` | `D1` ABSENT → substitute the research fallback and record it · roster mismatch → stop, you cannot enter |
-| 2 | `D5` `D10` `D14` `D15` | all four are free, all four are unrecoverable later |
+| 2 | `D5` `D10` `D14` `D15` `D19` | all five are free, all five are unrecoverable later |
 | 3 | `D2` `D3` `D6` | the go / no-go. `D6` above the bar → cut scope before writing code |
 | 4 | `D4` `D7` `D8` `D12` `D17` | day-1 build commitments |
 | 5 | `D11` | reserve operators now; they expire on first contact |

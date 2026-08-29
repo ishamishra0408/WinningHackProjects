@@ -27,9 +27,10 @@ Audit contract, captured from source — see [provenance](README.md#provenance).
 | V-4 | Credential-removal probe | auto | Docker | v4_no_credentials.sh | no-credentials.log | breaks | ✅ |
 | V-5 | Demo-path coverage → executed file set | auto | c8 · coverage.py · go test -cover | v5_demo_path.sh | demo-path.txt | ≥1 file executed outside main/entrypoint | ⬜ feeds V-6 |
 | V-6 | Mock ratio over the executed set only | auto | ripgrep + scc | v6_mock.sh | mock-ratio.json | <20% of demo-path LOC | ✅ |
-| V-7 | Prior-art / differentiation | judge-A, 15-min box | GitHub + registry search | manual, log template | priorart.json — N closest + delta statement | no off-the-shelf equivalent | ⬜ |
+| V-7 | Prior-art / differentiation | judge-A, 15-min box | GitHub + registry search | manual, log template | priorart.json — N closest + delta statement | no off-the-shelf equivalent | ✅ |
 | V-8 | Reproduce their claimed number | auto | hyperfine · k6 · their eval script | v8_reproduce_claim.sh | claim-reproduction.json | within ±20% of claim | ⬜ if no claim made, record claim: none |
-| V-9 | Is there a claim at all? | auto | ripgrep on README | v9_claim_present.sh | bool + quoted line | claim stated with a number | ⬜ absence is itself a finding |
+| V-9 | Is there a claim at all? | auto | ripgrep on README | v9_claim_present.sh | bool + quoted line | claim stated with a number | ⬜ advisory — 6 of 28 winners pass; kept only because V-8 needs the claim |
+| V-10 | Demo artifact — the thing judges actually watch | auto | ripgrep + HTTP HEAD | v10_demo_artifact.sh | demo-artifact.json — kind, duration, reachable | present and reachable | ✅ |
 
 ## Metrics beyond tool + script
 
@@ -39,6 +40,8 @@ Audit contract, captured from source — see [provenance](README.md#provenance).
 | runs: 2, deterministic: bool | V-3, V-4, V-5, V-6, V-8 | re-run each; differing results mean the probe is flaky, not that the project passed |
 | time_box_min | V-7 | unbounded search silently becomes the whole review |
 | demo_path_loc | V-6 | a ratio over 40 LOC is not a ratio — report LOC too |
+| vendored_loc | V-6 | checked-in dependencies are not the team's code and must leave the denominator |
+| artifact_kind, duration_s | V-10 | a video, a deck or a live URL are different evidence; record which, and how long |
 | evidence_path | all | a verdict without a stored artifact is not reviewable |
 | blocking: bool | all | declared before the run, never after |
 | probe_results_withheld_until_scored | V-2 | raters see V-3/V-4/V-6 results after their own scores, not before |
@@ -107,10 +110,10 @@ rg -n --no-heading '[0-9]+(\.[0-9]+)?\s*(x|%|ms|s|req/s|faster|cheaper)' README.
 | Step | Tasks | Gate |
 |---|---|---|
 | 1 | V-1 | fails → stop, Value unscorable |
-| 2 | V-3, V-4, V-9 (parallel, auto) | V-3 or V-4 fail → Value capped at 1/5 |
+| 2 | V-3, V-4, V-9, V-10 (parallel, auto) | V-3 or V-4 fail → Value capped at 1/5 · no reachable demo artifact → capped at 2/5 |
 | 3 | V-5 → V-6 | V-6 ≥20% → capped at 2/5 |
 | 4 | V-8 | claim unreproducible → capped at 3/5 |
-| 5 | V-2, V-7 (two raters, results of 2–4 withheld until scores submitted) | final score |
+| 5 | V-2, V-7 (two raters, results of 2–4 withheld until scores submitted) | V-7 finds an off-the-shelf equivalent → capped at 2/5 · otherwise final score |
 
 | Field | Value |
 |---|---|

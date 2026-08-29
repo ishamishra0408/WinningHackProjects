@@ -73,19 +73,20 @@ git shortlog -sne                                                    # F-4
 - [ ] 🔒 `F-2b` Observed timeline — ≥80% inside window
 - [ ] 🔒 `F-2c` Tamper check — drift <1h on ≥90% of commits; **report both numbers** — a violation
       count with no commit total is not a share
-- [ ] 🔒 `F-3` Opening-commit mass — <50% of final LOC
+- [ ] 🔒 `F-3` Opening-commit mass, over the team's own first commit — <50% of final LOC
 - [ ] 🔒 `F-4` Author roster match — every author on roster
 - [ ] `F-12` Cadence shape — ≥8 distinct commit hours
 <!-- /checks -->
 
 ## 6 · Demo honesty
 
-<!-- checks: V-5 V-6 V-8 V-9 -->
+<!-- checks: V-5 V-6 V-8 V-9 V-10 -->
 - [ ] `V-5` Demo-path coverage → executed file set — ≥1 file executed outside main/entrypoint
 - [ ] 🔒 `V-6` Mock ratio over the executed set only — <20% of demo-path LOC; **report the LOC
       denominator** — a ratio over 40 lines is not a ratio
 - [ ] `V-8` Reproduce their claimed number — within ±20% of claim
 - [ ] `V-9` Is there a claim at all? — claim stated with a number
+- [ ] 🔒 `V-10` Demo artifact — present and reachable
 <!-- /checks -->
 
 ## 7 · The cold-clone test 🔥 one shot
