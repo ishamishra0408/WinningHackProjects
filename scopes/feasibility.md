@@ -23,22 +23,22 @@ Core finding that shapes the contract: git author/committer dates are trivially 
 
 ## Feasibility tasks
 
-| ID | Task | Run by | devTool | Script | Output | Threshold | Blocks? |
+| ID | Task | Run by | devTool | Script | Output | Threshold | Caps at |
 |---|---|---|---|---|---|---|---|
-| F-1 | Fix the window — start/end/TZ + shape + entrant roster | judge, from event page | WebFetch | f1_window.sh | window-and-roster.json | both timestamps, window_kind, and roster present | ✅ |
-| F-2a | Claimed timeline | auto | git log | f2_timeline.sh | commit histogram | ≥80% inside window | ⬜ claimed only |
-| F-2b | Observed timeline — server push events | auto | gh api .../events | f2_timeline.sh | push-events.json | ≥80% inside window | ✅ authoritative |
-| F-2c | Tamper check — author vs committer date drift | auto | git log --format='%ad %cd' | f2_timeline.sh | date-drift.json | drift <1h on ≥90% of commits | ✅ mismatch with F-2b = rewritten history |
-| F-3 | Opening-commit mass, over the team's own first commit | auto | git log --numstat | f3_opening_commit_mass.sh | first-commit LOC share | <50% of final LOC | ✅ |
-| F-4 | Author roster match | auto | git shortlog -sne + Co-authored-by trailers | f4_authors.sh | authors.json | every author on roster | ✅ |
-| F-5 | Effort plausibility | auto | scc (COCOMO dev-months) | f5_effort.sh | effort.json | ≲3× available person-hours | ⬜ advisory only |
-| F-6 | Comprehension probe — 3 randomly picked functions, author explains + predicts output | judge, live, seeded random | ripgrep + shuf --random-source | f6_comprehension_probe.sh | comprehension.json | 3/3 explained, ≥2/3 output predicted | ✅ the real authorship test |
-| F-7 | Builds from clean clone | auto | Docker | f7_build.sh | exit code | exits 0 | ✅ |
-| F-8 | Runs off the author's machine | auto | Docker / Actions runner | f7_build.sh | run log | payoff reached in neutral env | ✅ |
-| F-9 | CI present + green | auto | gh run list | f9_ci.sh | run history | present, >85% green | ⬜ |
-| F-10 | Lockfile integrity | auto | npm ci · pip-compile --generate-hashes · go mod verify · cargo --locked | f10_lock.sh | exit code | exits 0 | ✅ |
-| F-11 | Single-file LOC share | auto | scc --by-file · CodeScene | f11_file_loc_share.sh | file-loc-shares.json | no file >30% of LOC | ⬜ |
-| F-12 | Cadence shape | auto | git log histogram | f2_timeline.sh | per-hour commit counts | ≥8 distinct commit hours | ⬜ one dump = F-3 signal |
+| F-1 | Fix the window — start/end/TZ + shape + entrant roster | judge, from event page | WebFetch | f1_window.sh | window-and-roster.json | both timestamps, window_kind, and roster present | unscorable | 
+| F-2a | Claimed timeline | auto | git log | f2_timeline.sh | commit histogram | ≥80% inside window | — claimed only | 
+| F-2b | Observed timeline — server push events | auto | gh api .../events | f2_timeline.sh | push-events.json | ≥80% inside window | 1/5 — authoritative | 
+| F-2c | Tamper check — author vs committer date drift | auto | git log --format='%ad %cd' | f2_timeline.sh | date-drift.json | drift <1h on ≥90% of commits | 1/5 — mismatch with F-2b = rewritten history | 
+| F-3 | Opening-commit mass, over the team's own first commit | auto | git log --numstat | f3_opening_commit_mass.sh | first-commit LOC share | <50% of final LOC | 1/5 | 
+| F-4 | Author roster match | auto | git shortlog -sne + Co-authored-by trailers | f4_authors.sh | authors.json | every author on roster | 1/5 | 
+| F-5 | Effort plausibility | auto | scc (COCOMO dev-months) | f5_effort.sh | effort.json | ≲3× available person-hours | — advisory only | 
+| F-6 | Comprehension probe — 3 randomly picked functions, author explains + predicts output | judge, live, seeded random | ripgrep + shuf --random-source | f6_comprehension_probe.sh | comprehension.json | 3/3 explained, ≥2/3 output predicted | 2/5 — the real authorship test | 
+| F-7 | Builds from clean clone | auto | Docker | f7_build.sh | exit code | exits 0 | 2/5 | 
+| F-8 | Runs off the author's machine | auto | Docker / Actions runner | f7_build.sh | run log | payoff reached in neutral env | 2/5 | 
+| F-9 | CI present + green | auto | gh run list | f9_ci.sh | run history | present, >85% green | — | 
+| F-10 | Lockfile integrity | auto | npm ci · pip-compile --generate-hashes · go mod verify · cargo --locked | f10_lock.sh | exit code | exits 0 | 2/5 | 
+| F-11 | Single-file LOC share | auto | scc --by-file · CodeScene | f11_file_loc_share.sh | file-loc-shares.json | no file >30% of LOC | — | 
+| F-12 | Cadence shape | auto | git log histogram | f2_timeline.sh | per-hour commit counts | ≥8 distinct commit hours | — one dump = F-3 signal | 
 
 ## Metrics beyond tool + script
 

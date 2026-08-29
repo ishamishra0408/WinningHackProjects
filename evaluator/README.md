@@ -39,6 +39,12 @@ lowest cap any failure triggered.
 This table says **which failure caps at which level**. It deliberately carries no threshold
 values — those live in the [contracts](../scopes/README.md), one home each.
 
+**Superseded.** Caps are now declared per task, in the `Caps at` column of each contract's task
+table — one home, machine-readable, and the source `api/runners.py` and `generate-gate.py` both
+read. The table below is kept only as the historical merged view and **disagreed with the
+contracts in four places** when it was checked: it capped `U-1` at 1/5 where the contract says
+*unscorable*, and capped `F-9` and `F-12` where the contract's step 5 says *advisory, no cap*.
+
 | Scope | Cap 1/5 | Cap 2/5 | Cap 3/5 |
 |-------|---------|---------|---------|
 | **Value** | `V-3` or `V-4` passes when it should break (staged demo) | `V-6` mock ratio over its bar · `V-10` no reachable demo artifact · `V-7` an off-the-shelf equivalent exists | `V-8` claimed number unreproducible |

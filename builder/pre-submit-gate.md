@@ -84,7 +84,7 @@ git shortlog -sne                                                    # F-4
 - [ ] `V-5` Demo-path coverage → executed file set — ≥1 file executed outside main/entrypoint
 - [ ] 🔒 `V-6` Mock ratio over the executed set only — <20% of demo-path LOC; **report the LOC
       denominator** — a ratio over 40 lines is not a ratio
-- [ ] `V-8` Reproduce their claimed number — within ±20% of claim
+- [ ] 🔒 `V-8` Reproduce their claimed number — within ±20% of claim
 - [ ] `V-9` Is there a claim at all? — claim stated with a number
 - [ ] 🔒 `V-10` Demo artifact — present and reachable
 <!-- /checks -->

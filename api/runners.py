@@ -36,6 +36,23 @@ VENDORED = re.compile(r"node_modules/|/lib/react|vendor/|dist/|build/|\.min\.|th
 MEASURED, ABSENT, UNEVALUABLE = "MEASURED", "ABSENT", "UNEVALUABLE"
 
 
+CAP_RE = re.compile(r"^\s*(\d)/5|^\s*(unscorable)|^\s*(uncapped)")
+
+
+def _cap(cell: str) -> tuple[str | None, bool]:
+    """(cap, blocking) from the Caps at column. '2/5' -> ('2/5', True);
+    'unscorable' -> ('unscorable', True); 'uncapped' -> (None, True) and it is a
+    declared defect; '—' -> (None, False)."""
+    m = CAP_RE.match(cell)
+    if not m:
+        return None, False
+    if m.group(1):
+        return f"{m.group(1)}/5", True
+    if m.group(2):
+        return "unscorable", True
+    return None, True
+
+
 def load_weights() -> dict:
     """Scope weights, read from their one home: the scopes/README.md table."""
     text = (ROOT / "scopes" / "README.md").read_text()
@@ -60,11 +77,13 @@ def load_tasks() -> dict[str, dict]:
             cols = [c.strip() for c in m.group(2).split("|")]
             if len(cols) < 7:
                 continue
+            cap, blocking = _cap(cols[6])
             tasks[m.group(1)] = {
                 "scope": scope,
                 "task": cols[0].split(" — ")[0].strip(),
                 "threshold": cols[5],
-                "blocking": "✅" in cols[6],
+                "cap": cap,
+                "blocking": blocking,
             }
     return tasks
 
@@ -341,7 +360,18 @@ def summarise(tasks: dict) -> dict:
     for scope in CONTRACTS:
         rows = {t: v for t, v in tasks.items() if v["scope"] == scope}
         failed_blocking = sorted(t for t, v in rows.items() if v["blocking"] and v["verdict"] == "FAIL")
+        # The score is the LOWEST cap any failure triggered -- a meet, not a sum.
+        triggered = [rows[t]["cap"] for t in failed_blocking if rows[t]["cap"]]
+        unscorable = [t for t in failed_blocking if rows[t]["cap"] == "unscorable"]
+        numeric = sorted(int(c[0]) for c in triggered if c and c[0].isdigit())
+        # A blocking task we could not run leaves the cap a CEILING, not a score.
+        unmeasured_blocking = sorted(t for t, v in rows.items()
+                                     if v["blocking"] and v["state"] != MEASURED)
         out[scope] = {
+            "cap": "unscorable" if unscorable else (f"{numeric[0]}/5" if numeric else None),
+            "score_is_a_ceiling_because": unmeasured_blocking or None,
+            "uncapped_blocking_tasks": sorted(t for t, v in rows.items()
+                                              if v["blocking"] and v["cap"] is None),
             "measured": sum(1 for v in rows.values() if v["state"] == MEASURED),
             "absent": sum(1 for v in rows.values() if v["state"] == ABSENT),
             "unevaluable": sum(1 for v in rows.values() if v["state"] == UNEVALUABLE),

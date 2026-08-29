@@ -19,20 +19,20 @@ Core constraint: a naive operator is single-use — each person is cold exactly 
 
 ## Usability tasks
 
-| ID | Task | Run by | devTool | Script | Output | Threshold | Blocks? |
+| ID | Task | Run by | devTool | Script | Output | Threshold | Caps at |
 |---|---|---|---|---|---|---|---|
-| U-1 | Define the payoff — the one observable that means "it worked" | judge, from README/demo claim | none | manual | payoff.json | exactly 1, observable without the author | ✅ |
-| U-2 | Cold-clone time to payoff | naive operator ×2, timed | asciinema + clean container | u2_cold_clone_timing.sh | cold-clone.cast, minutes | median <10 min | ✅ |
-| U-3 | Undocumented steps | auto, over U-2's recording | asciinema + comm | u3_undocumented_steps.sh | undocumented.txt | 0 | ✅ |
-| U-4 | One-click run exists and works | auto | devcontainer CLI · Codespaces · docker compose | u4_oneclick.sh | exit code | present, exits 0 | ⬜ |
-| U-5 | Setup failure rate across environments | auto | Actions matrix | u5_environment_matrix.yml | matrix results | 3/3 green | ✅ |
-| U-6 | README blocks actually run — extract every fenced shell block, execute in order, clean container | auto | awk + Docker | u6_readme.sh | readme-run.log | all blocks exit 0 | ✅ |
-| U-7 | Prerequisites honesty | auto, falls out of U-6 | Docker | u6_readme.sh diff pass | missing-prereqs.txt | empty | ⬜ |
-| U-8 | Happy path scripted headless | auto | Playwright · Cypress · pexpect | u8_happy_path.sh | pass/fail + duration | passes, <2× human time | ⬜ |
-| U-9 | UI audit (web only) | auto | Lighthouse · pa11y / axe-core | u9_ui.sh | lh.json, pa11y.json | perf ≥70 · a11y ≥90 · 0 WCAG-A errors | ⬜ |
-| U-10 | Error recovery — 4 injected faults | auto | Docker + fault script | u10_faults.sh | faults.json | ≥3 of 4 name cause and fix | ⬜ |
-| U-11 | Doc sufficiency — payoff reached without opening source | auto, from session record | asciinema grep | u11_source_opens.sh | bool | true | ⬜ |
-| U-12 | SEQ per task, 1–7 | operator | none | manual | seq.json | median ≥5 | ⬜ |
+| U-1 | Define the payoff — the one observable that means "it worked" | judge, from README/demo claim | none | manual | payoff.json | exactly 1, observable without the author | unscorable | 
+| U-2 | Cold-clone time to payoff | naive operator ×2, timed | asciinema + clean container | u2_cold_clone_timing.sh | cold-clone.cast, minutes | median <10 min | 3/5 | 
+| U-3 | Undocumented steps | auto, over U-2's recording | asciinema + comm | u3_undocumented_steps.sh | undocumented.txt | 0 | 3/5 | 
+| U-4 | One-click run exists and works | auto | devcontainer CLI · Codespaces · docker compose | u4_oneclick.sh | exit code | present, exits 0 | — | 
+| U-5 | Setup failure rate across environments | auto | Actions matrix | u5_environment_matrix.yml | matrix results | 3/3 green | 3/5 | 
+| U-6 | README blocks actually run — extract every fenced shell block, execute in order, clean container | auto | awk + Docker | u6_readme.sh | readme-run.log | all blocks exit 0 | 2/5 | 
+| U-7 | Prerequisites honesty | auto, falls out of U-6 | Docker | u6_readme.sh diff pass | missing-prereqs.txt | empty | — | 
+| U-8 | Happy path scripted headless | auto | Playwright · Cypress · pexpect | u8_happy_path.sh | pass/fail + duration | passes, <2× human time | — | 
+| U-9 | UI audit (web only) | auto | Lighthouse · pa11y / axe-core | u9_ui.sh | lh.json, pa11y.json | perf ≥70 · a11y ≥90 · 0 WCAG-A errors | — | 
+| U-10 | Error recovery — 4 injected faults | auto | Docker + fault script | u10_faults.sh | faults.json | ≥3 of 4 name cause and fix | — | 
+| U-11 | Doc sufficiency — payoff reached without opening source | auto, from session record | asciinema grep | u11_source_opens.sh | bool | true | — | 
+| U-12 | SEQ per task, 1–7 | operator | none | manual | seq.json | median ≥5 | — | 
 
 ## Metrics beyond tool + script
 

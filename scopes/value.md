@@ -19,18 +19,18 @@ Audit contract, captured from source — see [provenance](README.md#provenance).
 
 ## Value tasks
 
-| ID | Task | Run by | devTool | Script | Output | Threshold | Blocks? |
+| ID | Task | Run by | devTool | Script | Output | Threshold | Caps at |
 |---|---|---|---|---|---|---|---|
-| V-1 | Extract testable success criteria from the event page | agent (WebFetch) + 1 human confirm | WebFetch / curl+pandoc | v1_criteria.sh | criteria.json — 3–5 criteria, each testable | ≥3 criteria, each with a pass condition | ✅ everything downstream is unscorable without it |
-| V-2 | Score topic fit against criteria.json | judge-A + judge-B, independent | none exists — rubric only | manual, template provided | topic-fit.json per rater | ≥3 of 4 criteria met, evidence cited | ✅ |
-| V-3 | Offline probe — demo realism | auto | Docker | v3_offline.sh | offline.log, exit code | demo breaks or visibly degrades | ✅ staged demo = fail |
-| V-4 | Credential-removal probe | auto | Docker | v4_no_credentials.sh | no-credentials.log | breaks | ✅ |
-| V-5 | Demo-path coverage → executed file set | auto | c8 · coverage.py · go test -cover | v5_demo_path.sh | demo-path.txt | ≥1 file executed outside main/entrypoint | ⬜ feeds V-6 |
-| V-6 | Mock ratio over the executed set only | auto | ripgrep + scc | v6_mock.sh | mock-ratio.json | <20% of demo-path LOC | ✅ |
-| V-7 | Prior-art / differentiation | judge-A, 15-min box | GitHub + registry search | manual, log template | priorart.json — N closest + delta statement | no off-the-shelf equivalent | ✅ |
-| V-8 | Reproduce their claimed number | auto | hyperfine · k6 · their eval script | v8_reproduce_claim.sh | claim-reproduction.json | within ±20% of claim | ⬜ if no claim made, record claim: none |
-| V-9 | Is there a claim at all? | auto | ripgrep on README | v9_claim_present.sh | bool + quoted line | claim stated with a number | ⬜ advisory — 6 of 28 winners pass; kept only because V-8 needs the claim |
-| V-10 | Demo artifact — the thing judges actually watch, wherever it was submitted | auto | ripgrep + HTTP HEAD + container probe | v10_demo_artifact.sh | demo-artifact.json — kind, source, duration, reachable | present and reachable | ✅ |
+| V-1 | Extract testable success criteria from the event page | agent (WebFetch) + 1 human confirm | WebFetch / curl+pandoc | v1_criteria.sh | criteria.json — 3–5 criteria, each testable | ≥3 criteria, each with a pass condition | unscorable — everything downstream is unscorable without it | 
+| V-2 | Score topic fit against criteria.json | judge-A + judge-B, independent | none exists — rubric only | manual, template provided | topic-fit.json per rater | ≥3 of 4 criteria met, evidence cited | uncapped | 
+| V-3 | Offline probe — demo realism | auto | Docker | v3_offline.sh | offline.log, exit code | demo breaks or visibly degrades | 1/5 — staged demo = fail | 
+| V-4 | Credential-removal probe | auto | Docker | v4_no_credentials.sh | no-credentials.log | breaks | 1/5 | 
+| V-5 | Demo-path coverage → executed file set | auto | c8 · coverage.py · go test -cover | v5_demo_path.sh | demo-path.txt | ≥1 file executed outside main/entrypoint | — feeds V-6 | 
+| V-6 | Mock ratio over the executed set only | auto | ripgrep + scc | v6_mock.sh | mock-ratio.json | <20% of demo-path LOC | 2/5 | 
+| V-7 | Prior-art / differentiation | judge-A, 15-min box | GitHub + registry search | manual, log template | priorart.json — N closest + delta statement | no off-the-shelf equivalent | 2/5 | 
+| V-8 | Reproduce their claimed number | auto | hyperfine · k6 · their eval script | v8_reproduce_claim.sh | claim-reproduction.json | within ±20% of claim | 3/5 — if no claim made, record claim: none | 
+| V-9 | Is there a claim at all? | auto | ripgrep on README | v9_claim_present.sh | bool + quoted line | claim stated with a number | — advisory — 6 of 28 winners pass; kept only because V-8 needs the claim | 
+| V-10 | Demo artifact — the thing judges actually watch, wherever it was submitted | auto | ripgrep + HTTP HEAD + container probe | v10_demo_artifact.sh | demo-artifact.json — kind, source, duration, reachable | present and reachable | 2/5 | 
 
 ## Metrics beyond tool + script
 

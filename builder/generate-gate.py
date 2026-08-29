@@ -50,7 +50,9 @@ def read_contracts() -> dict[str, tuple[str, str, bool]]:
                 continue
             # the head of the Task column, before any em-dash gloss
             task = cols[0].split(" — ")[0].strip()
-            tasks[m.group(1)] = (task, cols[5], "✅" in cols[6])
+            # a task blocks when the Caps at column declares a cap
+            blocking = bool(re.match(r"\s*(\d/5|unscorable|uncapped)", cols[6]))
+            tasks[m.group(1)] = (task, cols[5], blocking)
     return tasks
 
 

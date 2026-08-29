@@ -103,8 +103,8 @@ class Handler(BaseHTTPRequestHandler):
             "overall": None,
             "weights": runners.load_weights(),
             "overall_refused_because": [
-                "caps are stated in prose in the contracts, so a /5 emitted here would be a second home for them",
-                "UNEVALUABLE is not a pass -- tasks needing Docker, an operator or the Events API did not run",
+                "UNEVALUABLE is not a pass -- a blocking task that did not run leaves each scope's "
+                "cap a CEILING, not a score, and every scope here has at least one",
             ],
             "not_a_prediction": "28 winning repos fail these contracts. This says whether a project holds up, not whether it wins.",
         })
