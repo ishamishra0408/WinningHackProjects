@@ -66,7 +66,7 @@ auditor inferred from a kickoff deck, or substituted from the topic's winners, a
 cannot cap someone else's project, so `V-2` becomes advisory. **Omitted is treated as unknown, and
 an unknown does not cap.**
 
-`window_end` + `window_days` set `window_kind` for `F-2a`. `starter_sha` makes `F-3` measure from
+`window_end` + `window_days` set `window_kind` for `F-1`, and `team_size` + `event_hours` give `F-14` its denominator. `starter_sha` makes `F-3` measure from
 the **team's** first commit when the event shipped a starter repo. Both optional; without them the
 tasks that need them return `ABSENT`, not a guess.
 
@@ -82,7 +82,7 @@ tasks that need them return `ABSENT`, not a guess.
 |---|---|---|
 | `MEASURED` | the check ran | `F-2c` → `{"drift_violations": 0, "commits_total": 41, "within_1h_share": 1.0}` |
 | `ABSENT` | a fact about **the subject** | `F-4` → no entrant roster supplied; `V-1` → no criteria supplied |
-| `UNEVALUABLE` | a fact about **the instrument** | `V-3` → needs Docker |
+| `UNEVALUABLE` | a fact about **the instrument** | `F-7` → needs Docker |
 
 **`UNEVALUABLE` is not a pass.** Ten Usability tasks need an operator or a container and will
 always return it from a clone alone. A caller that treats them as passes has invented a score.
@@ -140,9 +140,10 @@ score and the response says so.
 
 | Limit | Consequence |
 |---|---|
-| `F-2a` is computed at **day** granularity | an event with an hours-long submission deadline needs the finer window; the day figure is optimistic |
 | `V-10` cannot discover a submission on its own | it reads the repo, or what you declare — an artifact you neither commit nor declare is `ABSENT` |
 | `duration_s` covers WebM and MP4 only | other containers return `null`, not a failure |
 | `F-4` cannot verify a roster | always `ABSENT` until `F-1` supplies one |
 | 10 Usability tasks need an operator or container | always `UNEVALUABLE` here |
+| `U-13` needs three judge runs handed in | fewer than three is `UNEVALUABLE`; a split caps nothing |
+| `V-8` runs only a command you name | nothing is discovered from a README and executed |
 | No auth, no rate limit, single host | localhost only |

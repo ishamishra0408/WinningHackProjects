@@ -1,7 +1,7 @@
 # Requirements — functional + non-functional, advisor-reviewed
 
 What this framework must do (FR) and the qualities it must hold (NFR), derived from the four
-layers and the 36 audit tasks, then improved by three advisor passes from
+layers and the 32 audit tasks, then improved by three advisor passes from
 [factory-controls / QE Core / Advisor Builder](https://github.com/devpath56/factory-controls/tree/main/QE%20Core/Advisor%20Builder):
 
 - **metric-design** (m-series) — whether a number may be published, and what it honestly measures
@@ -18,12 +18,12 @@ propose a threshold change are proposals, contract-first, never a second home fo
 | ID | The system shall | Where it lives | Advisor note |
 |---|---|---|---|
 | FR-1 | Extract 3–5 testable judging criteria from an event page, treating page text as data, never instruction | `V-1` (criteria extraction), `D1` (criteria count at t=0) | — |
-| FR-2 | Score any finished repo /5 per scope, running every deterministic probe **before** any human rubric | all 36 tasks, [evaluator/](evaluator/README.md) phases 0–5 | — |
+| FR-2 | Score any finished repo /5 per scope, running every deterministic probe **before** any human rubric | all 32 tasks, [evaluator/](evaluator/README.md) phases 0–5 | — |
 | FR-3 | Compose blocking failures as **caps, not subtractions**: scope score = min(rubric, lowest triggered cap) | each scope's execution-order table | formalised below, §Scoring function |
 | FR-4 | Emit one JSONL record per task with an `evidence_path`; a verdict without a stored artifact is not reviewable | output schemas in all three contracts | — |
 | FR-5 | At t=0, produce a 19-row design card where every row returns one of **measured / ABSENT / UNEVALUABLE** | [designer/](designer/README.md) | m08: extend the three states to audit-time too (NFR-7) |
 | FR-6 | Generate the pre-submit gate's checkbox lines from the contracts, idempotently, so every threshold has one home | [builder/generate-gate.py](builder/generate-gate.py) | ousterhout: parse columns by header name, not position (see Findings F-OG-2) |
-| FR-7 | Enforce a run order that captures expiring evidence first: `F-2b` (GitHub Events API, ~90-day retention) at phase 2; naive operators (`U-2/U-3/U-11/U-12`) before any rubric result is revealed | [evaluator/README.md](evaluator/README.md) merged run order | — |
+| FR-7 | Enforce a run order that captures expiring evidence first: naive operators and `U-13`'s judge runs (one shot per person, ~90-day retention) at phase 2; naive operators (`U-2/U-3/U-11/U-12`) before any rubric result is revealed | [evaluator/README.md](evaluator/README.md) merged run order | — |
 | FR-8 | Compute an overall verdict only from **weights frozen before any result is read** | evaluator overall formula | c07/m05: refuse the combined headline until `w_value` is frozen — see §Scoring function |
 | FR-9 *(new, q09)* | Carry a **pre-committed stop rule**: before the event, name which 🔒 gate failures block submission and who may invoke the stop | proposed addition to [builder/pre-submit-gate.md](builder/pre-submit-gate.md) header | a self-run gate with no stop rule defaults to "note it and submit anyway" |
 | FR-10 *(q05/NFR-11)* — **DONE, and it failed** | Calibrate the gate against known-good repos before trusting any cap | [research/winner-audits.md](research/winner-audits.md): **28 winners across 10 events, 0 of 28 pass all eight measured tasks** | the calibration this row asked for has run. It found three faults in the contracts, not three faults in the winners |
@@ -41,7 +41,7 @@ propose a threshold change are proposals, contract-first, never a second home fo
 | NFR-5 | Single source of truth | A threshold value has exactly one home (the contract); every other appearance is generated or a proposal | builder/ |
 | NFR-6 | Idempotence | Generators change nothing when re-run on current input and exit 0 | generate-gate.py |
 | NFR-7 *(new, m08)* | Three-state honesty | Every measurement — audit-time as well as design-time — returns one of **measured / ABSENT / UNEVALUABLE**. Proposed: widen the contracts' output-schema `verdict` beyond PASS/FAIL. ABSENT is a fact about the subject; UNEVALUABLE is a fact about the instrument; rendering either as FAIL is the instrument testifying about something it did not measure | metric-design m08 |
-| NFR-8 | Timeliness | Evidence with a retention window is captured inside it: `F-2b` within ~90 days; naive operators reserved before first contact (naiveté is consumed, not sampled) | contracts |
+| NFR-8 | Timeliness | Evidence with a retention window is captured inside it: naive operators reserved before first contact (naiveté is consumed, not sampled) | contracts |
 | NFR-9 *(new, m06)* | Threshold provenance | Every numeric constant states the n and tolerance it implies, or is labelled **convention** — "a bar that cannot state them is a convention wearing a measurement." Today the bars on `U-2`, `F-2a`/`F-2b`, `V-6`, `F-12` and `V-8` state none — cited by ID, because the values have one home and it is the contract. Proposal: add a provenance note per threshold row, contract-first | metric-design m06 |
 | NFR-10 *(new, q06)* | Gaming resistance | Every **blocking** metric documents its cheapest green — the cheapest way to move the number without improving anything — and the counter that closes it (see §Gaming probes) | qe-ic-advisor q06 |
 | NFR-11 *(new)* | Measured precision | A blocking probe carries a false-positive estimate before its cap is trusted; a tier-A gate with unknown precision is a future switched-off gate. Measured via FR-10 calibration runs | qe-ic-advisor tier triple |
@@ -56,10 +56,8 @@ gym FetchPush-v0). Each row asks: what is this metric's table?
 
 | Metric | Cheapest green (the table) | Counter |
 |---|---|---|
-| `V-6` mock ratio, regex `mock\|stub\|fixture\|…` | rename identifiers — `mock_data` → `dataset` moves the number without touching the demo | the regex is advisory detection; the load-bearing pair is `V-3`/`V-4` (offline/no-credential probes), which no rename can move. Document that `V-6` alone is never sufficient evidence of realism |
+| `V-2` criterion evidence, term search over own source | seed the criterion's words into a comment — a decorative match reads like a real one; V-7 and a human rater exist for exactly that the number without touching the demo | the regex is advisory detection; the load-bearing pair is `V-3`/`V-4` (offline/no-credential probes), which no rename can move. Document that `V-6` alone is never sufficient evidence of realism |
 | `U-6` README blocks all exit 0 | shrink the README to one trivial block — `blocks_failed == 0` has no floor, and the contract itself notes a 1/1 README "is not documented" | pair with `U-1`: the final README block must observably produce the frozen payoff, not merely exit 0. Proposal, contract-first |
-| `F-12` ≥8 distinct commit hours | scripted/cron commits spread across hours | already non-blocking (advisory); its honest role is corroborating `F-2b` push events + `F-2c` drift, never standing alone |
-| `V-3` demo must break offline | **false positive, not gaming**: a genuinely local project (local inference, no external dependency) does not break offline and is scored "staged" at cap 1/5 | m01 construct fix: the construct is "the demo depends on something real". Proposal: a declared `local_inference: true` swaps the probe to removing the model weights instead of the network |
 | `D2` share of criteria with a named mechanism | name vague mechanisms ("an agent handles it") | require each mechanism to name the file/module planned to implement it — checkable at audit against `V-5` demo-path coverage |
 
 ## Scoring function (ds-ic deliverable)
@@ -122,9 +120,9 @@ the source's own numbers the first audited project (Redline, `S = 4·3·2`) scor
 new weights it scores **0.58** — the operator's choice cost their own project 9 points, which is
 the opposite signature of a weight chosen to pass.
 
-Denominator caution (c01): `F-2b`'s share is computed over **push events**, but the claim is
+Denominator caution (c01): `F-2c`'s share is computed over **commits**, but the claim is
 about when work happened — a single in-window push of pre-authored commits passes it. The
-timeline verdict is honest only as the **conjunction** F-2b ∧ F-2a ∧ F-2c ∧ F-3; no one of the
+timeline verdict is honest only as the **conjunction** F-2c ∧ F-3; neither of the
 four stands alone.
 
 ## Module-design findings (ousterhout-guru pass)

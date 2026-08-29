@@ -32,7 +32,6 @@ NOTES = {
     "F-7": ", **twice**; passes once and fails once is a fail",
     "F-10": "; `npm ci` / `pip-compile --generate-hashes` / `go mod verify` / `cargo --locked`",
     "F-2c": "; **report both numbers** — a violation count with no commit total is not a share",
-    "V-6": "; **report the LOC denominator** — a ratio over 40 lines is not a ratio",
     "F-6": "; published seed. The authorship test, and the one an AI-heavy build fails.",
 }
 

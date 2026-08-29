@@ -90,6 +90,11 @@ class Handler(BaseHTTPRequestHandler):
             demo_artifact=body.get("demo_artifact"),
             criteria_source=body.get("criteria_source"),
             criteria=body.get("criteria"),
+            prior_art=body.get("prior_art"),
+            eval_command=body.get("eval_command"),
+            walkthrough_runs=body.get("walkthrough_runs"),
+            team_size=body.get("team_size"),
+            event_hours=body.get("event_hours"),
         )
         if "error" in result and "tasks" not in result:
             self._send(502, result)

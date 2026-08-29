@@ -9,7 +9,6 @@
 | audited on | YYYY-MM-DD |
 | auditor(s) | |
 | weights used | from the [scopes table](../scopes/README.md) · **confirm they were frozen before any result was read** |
-| F-2b captured within 90 days? | yes / no — *if no, the timeline verdict is `git`-only and unfalsifiable* |
 | naive operators available | n = |
 
 ## Phase 0 — disqualifiers
@@ -30,11 +29,8 @@ implemented it → proof.
 |----|-------------|---------|----------|--------------------------|------------------------|
 | V-1 | testable criteria extracted | | | | |
 | V-2 | topic fit ≥3 of 4, evidence cited | | | | |
-| V-3 | offline probe — demo must break | | | | |
-| V-4 | credential-removal — must break | | | | |
-| V-5 | demo path ≥1 file outside entrypoint | | | | |
-| V-6 | mock ratio <20% of demo-path LOC | | | | |
 | V-7 | no off-the-shelf equivalent | | | | |
+| V-2 | ≥75% of V-1 criteria evidenced in source | | | | |
 | V-8 | claimed number within ±20% | | | | |
 | V-9 | numeric claim present at all *(advisory)* | | | | |
 | V-10 | demo artifact present and reachable | | | | |
@@ -59,9 +55,9 @@ implemented it → proof.
 | ID | Requirement | Tested? | Achieved | How they implemented it | Proof |
 |----|-------------|---------|----------|--------------------------|-------|
 | F-1 | window + roster fixed | | | | |
-| F-2a | claimed timeline ≥80% in window | | | | |
-| F-2b | **observed** push events ≥80% in window | | | | |
 | F-2c | author/committer drift <1h on ≥90% | | | | |
+| F-13 | lockfile + pinned runtime + start command, no machine paths | | | | |
+| F-14 | ≤150 own LOC per available person-hour (advisory) | | | | |
 | F-3 | opening commit <50% of final LOC | | | | |
 | F-4 | every author on roster | | | | |
 | F-5 | effort ≲3× available person-hours *(advisory)* | | | | |
@@ -71,7 +67,6 @@ implemented it → proof.
 | F-9 | CI present, >85% green | | | | |
 | F-10 | lockfile integrity | | | | |
 | F-11 | no file >30% of LOC | | | | |
-| F-12 | ≥8 distinct commit hours | | | | |
 
 ## Scores
 

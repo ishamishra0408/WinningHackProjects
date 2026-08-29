@@ -82,6 +82,32 @@ def parse_criteria(text: str) -> list | None:
 
 
 
+def parse_prior_art(text: str) -> list | None:
+    """A link per line. The word `none` is a DECLARATION that a search was run and
+    found nothing -- which is a different answer from leaving the box empty."""
+    lines = [l.strip() for l in (text or "").splitlines() if l.strip()]
+    if not lines:
+        return None
+    if len(lines) == 1 and lines[0].lower() in ("none", "no", "-"):
+        return []
+    return [{"url": l.split("|")[0].strip(),
+             "delta": (l.split("|", 1)[1].strip() if "|" in l else None)} for l in lines]
+
+
+def parse_walkthrough(text: str) -> list | None:
+    """`yes|no | breaks at ... | evidence`, one judge run per line."""
+    runs = []
+    for line in (text or "").splitlines():
+        if not line.strip():
+            continue
+        parts = [p.strip() for p in line.split("|")]
+        runs.append({"reachable": parts[0].lower().startswith("y"),
+                     "breaks_at": parts[1] if len(parts) > 1 and parts[1] else None,
+                     "evidence": parts[2] if len(parts) > 2 else None})
+    return runs or None
+
+
+
 st.set_page_config(page_title="WinningHackProjects", page_icon="🏆", layout="wide")
 
 
@@ -166,6 +192,30 @@ with st.sidebar:
             starter_sha = st.text_input("Organizer starter-repo SHA (if any)", "",
                                         help="F-3 then measures from the team's own first commit.")
             demo_url = st.text_input("Demo video / deck URL (if submitted outside the repo)", "")
+            c1, c2 = st.columns(2)
+            team_size = c1.number_input("Team size", 0, 20, 0,
+                                        help="With build hours, gives F-14 its denominator.")
+            event_hours = c2.number_input("Build hours", 0.0, 400.0, 0.0)
+            prior_art_text = st.text_area(
+                "Prior art — one GitHub link per line, or the word `none`", height=70,
+                placeholder="none",
+                help="V-7. Searching is an agent's job; this checks what the search returned and "
+                     "that each link resolves. Left empty, V-7 is ABSENT — which is not the same "
+                     "as writing `none`, and the report says so.")
+            eval_command = st.text_input(
+                "Their eval command (V-8 runs exactly this)", "",
+                placeholder="node scripts/failures.mjs",
+                help="Runs ONLY what you type here. Nothing is discovered from the README and "
+                     "executed — pointing this at a stranger's repo would otherwise run their "
+                     "code on your machine unread. Naming the command is the authorization.")
+            walkthrough_text = st.text_area(
+                "U-13 — three independent naive-user verdicts, one per line: "
+                "`yes|no | breaks at … | evidence`", height=90,
+                placeholder="yes |  | README names app.py as the first surface\n"
+                            "yes |  | `streamlit run app.py` is stated verbatim\n"
+                            "no | no install step | requirements.txt is never invoked",
+                help="A judgment can disagree with itself, so it caps only when all three agree. "
+                     "A split is reported in full and caps nothing.")
         go = st.button("Evaluate project", type="primary", width="stretch")
     else:
         event_url = st.text_input("Event link", placeholder="https://luma.com/…")
@@ -210,7 +260,12 @@ if mode == "Evaluate a project":
                 starter_sha=starter_sha.strip() or None,
                 demo_artifact={"url": demo_url.strip()} if demo_url.strip() else None,
                 criteria_source=None if criteria_source == "not stated" else criteria_source,
-                criteria=parse_criteria(criteria_text))
+                criteria=parse_criteria(criteria_text),
+                prior_art=parse_prior_art(prior_art_text),
+                eval_command=eval_command.strip() or None,
+                walkthrough_runs=parse_walkthrough(walkthrough_text),
+                team_size=int(team_size) or None,
+                event_hours=float(event_hours) or None)
         if "tasks" not in result:
             st.error(f"{result.get('error')} — {result.get('detail','')}")
             st.stop()

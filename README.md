@@ -42,7 +42,7 @@ The repo answers five questions in order. Each layer feeds the next.
 2. Audit two or three of them with `evaluator/` — the goal is not to catch them out, but to
    find **where the bar actually sat**. A project that won while failing a scope proves the
    judges didn't test that scope.
-3. For a new event, fill a design card from `designer/` **before writing code** — 30 of the 36
+3. For a new event, fill a design card from `designer/` **before writing code** — 26 of the 32
    audit tasks are ABSENT at that point, and the 19 that are not buy the ones you cannot fix later.
 4. Feed the card into `builder/` when speccing the project.
 5. Run `builder/pre-submit-gate.md` before submitting.
@@ -65,7 +65,7 @@ flowchart LR
     end
 
     subgraph Measurement
-        SC[scopes/ — 3 contracts<br/>36 tasks V-* U-* F-*]
+        SC[scopes/ — 3 contracts<br/>32 tasks V-* U-* F-*]
         EVAL[evaluator/ — merged run order,<br/>phases 0–5]
     end
 
@@ -111,7 +111,7 @@ flowchart TD
 
     subgraph Probes["Deterministic probes — run first, run twice"]
         AUTO[auto scripts: v3_offline, u6_readme,<br/>f2_timeline, f7_build, …]
-        EXP["expiring evidence: F-2b GitHub Events API (~90d)<br/>naive operators (one shot per person)"]
+        EXP["expiring evidence: naive operators (one shot per person)<br/>U-13 judge runs (3, unanimous or no cap)"]
     end
 
     subgraph Humans["Human rubric — probe results withheld until submitted"]
@@ -153,10 +153,12 @@ behind both diagrams live in [requirements.md](requirements.md).
 - Event table: 16 rows across 7 topics, all gallery URLs resolved.
 - Top-3 winners: pulled for 14 of 16 events. Two have no ranked winners to pull — Enterprise
   MCP (still open voting) and Agentic Orchestration (6 unranked finalists).
-- Contracts: **36 tasks, 22 blocking.** `V-10` (the demo artifact judges actually watch) added
-  after two external rubrics and one event confirmed the gap; `V-7` promoted to blocking; `V-9`
-  demoted to advisory at 6/28 winner pass.
-- Design layer: 19 t=0 checks, 16 of them mechanical, covering 30 of 36 audit tasks. The
+- Contracts: **32 tasks, 20 blocking**, after a pass that deleted four Value tasks and three
+  Feasibility ones that could never run or carried no signal (`V-3` `V-4` `V-5` `V-6`,
+  `F-2a` `F-2b` `F-12`), rewrote `V-2` and `V-7` as verifications of an agent's work rather
+  than rater rubrics, and added three that can actually run: `F-13` static portability,
+  `F-14` built mass against the hours that existed, and `U-13` the naive-user walkthrough.
+- Design layer: 19 t=0 checks, 16 of them mechanical, covering 26 of 32 audit tasks. The
   remaining 6 are recorded as ABSENT-until-built rather than left out. Cards filled: **none yet**.
 - Winner audits: **28 repos across 10 events**, harvested from the galleries' embedded
   `ItemList` — 1,060 of 1,092 projects carry a repo link. **0 of 28 pass all eight measured tasks.**

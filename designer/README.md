@@ -1,7 +1,7 @@
 # Designer — deciding what to build, before there is anything to audit
 
 The [scopes](../scopes/README.md) audit a finished repo. Every one of their tasks needs the
-artefact to exist. Given only a Luma event page and an idea, **30 of the 36 are ABSENT — a fact
+artefact to exist. Given only a Luma event page and an idea, **26 of the 32 are ABSENT — a fact
 about the subject, not a failure of the project.**
 
 This layer is the other direction: the 19 checks that *can* run at t=0, each one buying a specific
@@ -15,7 +15,7 @@ the requirement column of [../evaluator/scorecard-TEMPLATE.md](../evaluator/scor
 | | `D` — design-time *(this layer)* | `A` — audit-time *([evaluator](../evaluator/README.md))* |
 |---|---|---|
 | Input | event page + your plan | the built repo |
-| Rows | 19 | 36 |
+| Rows | 19 | 32 |
 | Answers | *what do I build, and will it clear the bar* | *did it hold up* |
 | Solve for | **your plan** | nothing — read-only |
 
@@ -40,9 +40,9 @@ produce the same answer.
 | `D1` | count of published judging criteria on the event page | `V-1` | STRONG |
 | `D2` | share of those criteria the plan names a mechanism for — **report both numbers** | `V-2` | STRONG |
 | `D3` | closest existing tools, 15-min box, plus one delta sentence | `V-7` | STRONG |
-| `D4` | plan names ≥1 authenticated external call the demo executes | `V-3` `V-4` | STRONG |
-| `D8` | demo crosses a module boundary — ≥2 planned files on the demo path | `V-5` | STRONG |
-| `D9` | every planned stub on the demo path has a scheduled replacement slot | `V-6` | WEAK |
+| `D4` | plan names ≥1 authenticated external call the demo executes | `V-2` | STRONG |
+| `D8` | demo crosses a module boundary — ≥2 planned files on the demo path | `F-11` | STRONG |
+| `D9` | every planned stub on the demo path has a scheduled replacement slot | `V-2` | WEAK |
 | `D10` | the number you intend to claim is written down **before** building | `V-8` `V-9` | STRONG |
 | `D19` | a slot for recording the demo video or deck is in the plan, before the last hour | `V-10` | STRONG |
 
@@ -69,9 +69,9 @@ person.
 
 | Row | Check at t=0 | Buys | Strength |
 |---|---|---|---|
-| `D6` | planned person-hours ÷ (team size × event hours), **from the event page** | `F-5` `F-12` | STRONG |
+| `D6` | planned person-hours ÷ (team size × event hours), **from the event page** | `F-5` `F-14` | STRONG |
 | `D13` | window fixed, and every intended contributor is on the entrant roster | `F-1` `F-4` | STRONG |
-| `D14` | committed build start is at or after window open | `F-2a` `F-2b` | STRONG |
+| `D14` | committed build start is at or after window open | `F-1` `F-2c` | STRONG |
 | `D15` | LOC of any starter or prior code you intend to import, declared before start | `F-3` | STRONG |
 | `D16` | committed read-rate — the share of shipped code you will actually read | `F-6` | WEAK |
 | `D17` | Dockerfile, lockfile and CI are inside day-1 scope | `F-7` `F-8` `F-9` `F-10` | STRONG |

@@ -26,9 +26,7 @@ Core finding that shapes the contract: git author/committer dates are trivially 
 | ID | Task | Run by | devTool | Script | Output | Threshold | Caps at |
 |---|---|---|---|---|---|---|---|
 | F-1 | Fix the window — start/end/TZ + shape + entrant roster | judge, from event page | WebFetch | f1_window.sh | window-and-roster.json | both timestamps, window_kind, and roster present | unscorable | 
-| F-2a | Claimed timeline | auto | git log | f2_timeline.sh | commit histogram | ≥80% inside window | — claimed only | 
-| F-2b | Observed timeline — server push events | auto | gh api .../events | f2_timeline.sh | push-events.json | ≥80% inside window | 1/5 — authoritative | 
-| F-2c | Tamper check — author vs committer date drift | auto | git log --format='%ad %cd' | f2_timeline.sh | date-drift.json | drift <1h on ≥90% of commits | 1/5 — mismatch with F-2b = rewritten history | 
+| F-2c | Tamper check — author vs committer date drift | auto | git log --format='%ad %cd' | f2_timeline.sh | date-drift.json | drift <1h on ≥90% of commits | 1/5 — rewritten history | 
 | F-3 | Opening-commit mass, over the team's own first commit | auto | git log --numstat | f3_opening_commit_mass.sh | first-commit LOC share | <50% of final LOC | 1/5 | 
 | F-4 | Author roster match | auto | git shortlog -sne + Co-authored-by trailers | f4_authors.sh | authors.json | every author on roster | 1/5 | 
 | F-5 | Effort plausibility | auto | scc (COCOMO dev-months) | f5_effort.sh | effort.json | ≲3× available person-hours | — advisory only | 
@@ -38,19 +36,19 @@ Core finding that shapes the contract: git author/committer dates are trivially 
 | F-9 | CI present + green | auto | gh run list | f9_ci.sh | run history | present, >85% green | — | 
 | F-10 | Lockfile integrity | auto | npm ci · pip-compile --generate-hashes · go mod verify · cargo --locked | f10_lock.sh | exit code | exits 0 | 2/5 | 
 | F-11 | Single-file LOC share | auto | scc --by-file · CodeScene | f11_file_loc_share.sh | file-loc-shares.json | no file >30% of LOC | — | 
-| F-12 | Cadence shape | auto | git log histogram | f2_timeline.sh | per-hour commit counts | ≥8 distinct commit hours | — one dump = F-3 signal | 
+| F-13 | Runs somewhere other than here, from source alone | auto | ripgrep + lockfile parse | f13_portable.sh | portability.json — lockfile, pinned runtime, start command, offending paths | lockfile **and** pinned runtime **and** a documented start command, with no absolute path or hardcoded localhost in own source | 2/5 — a static stand-in for F-7/F-8, and weaker than either | 
+| F-14 | Built mass against the hours that existed | auto | git log + own LOC | f14_scope.sh | scope-realism.json — own LOC, commits, hours, LOC per person-hour | ≤150 own LOC per available person-hour | — advisory: over the line is a **flag to look at**, never a cap; AI codegen raises this legitimately | 
 
 ## Metrics beyond tool + script
 
 | Field | Applies to | Why |
 |---|---|---|
 | timeline_source: git \| events \| both | F-2 | a verdict from git log alone is unfalsifiable — record which source produced it |
-| events_captured_at | F-2b | 90-day retention; after that the authoritative record is gone |
 | entrants: n, hours_available | F-5 | denominator for the effort ratio; absent, the ratio is meaningless |
 | ai_disclosed: bool | F-5, F-6 | if the event required disclosure, undisclosed heavy codegen is a rules issue, not a feasibility one |
 | probe_seed | F-6 | random selection must be reproducible or the author can dispute the picks |
 | probe_live: true, author_present: true | F-6 | the only task where the author's presence is required, not disqualifying |
-| window_kind: single-day \| multi-day \| multi-week | F-1, F-2a, F-2b | a 5-week window and a 7-hour window are different questions under one threshold |
+| window_kind: single-day \| multi-day \| multi-week | F-1, F-14 | a 5-week window and a 7-hour window are different questions under one threshold |
 | starter_sha | F-3 | when the event ships a starter repo, the opening commit is the organizers'; measure from the team's first commit after it |
 | vendored_loc | F-3, F-5, F-11 | checked-in dependencies are not the team's code and must leave every LOC denominator |
 | commits_total | F-2c | the threshold is a share, not a count — a violation count without the commit total is not a share |
@@ -61,7 +59,7 @@ Core finding that shapes the contract: git author/committer dates are trivially 
 
 ```json
 {
-  "task": "F-2b",
+  "task": "F-13",
   "scope": "feasibility",
   "repo": "https://github.com/owner/repo",
   "run_by": "auto",
@@ -72,7 +70,7 @@ Core finding that shapes the contract: git author/committer dates are trivially 
   "result": { "push_events": 41, "inside_window": 39, "share": 0.95,
               "git_claimed_share": 0.95,
               "date_drift_violations": 0, "commits_total": 47, "within_1h_share": 1.0 },
-  "threshold": "share >= 0.80 AND matches F-2a AND within_1h_share >= 0.90",
+  "threshold": "within_1h_share >= 0.90",
   "verdict": "PASS",
   "blocking": true,
   "evidence_path": "evidence/f2/push-events.json"
@@ -87,13 +85,6 @@ set -euo pipefail
 OWNER=owner; REPO=repo; PROBE_SEED=publish-this-seed; START=2026-08-15T09:00:00Z; END=2026-08-17T17:00:00Z
 OUT=evidence; mkdir -p "$OUT"/{f1,f2,f3,f4,f5,f6,f7,f9,f11}
 git clone "https://github.com/$OWNER/$REPO" src && cd src
-# ---------- F-2b: AUTHORITATIVE timeline (server-side, unforgeable) ----------
-gh api "repos/$OWNER/$REPO/events" --paginate \
-  --jq '.[] | select(.type=="PushEvent") | .created_at' > "../$OUT/f2/push-events.json"
-gh api "repos/$OWNER/$REPO" --jq '{created_at,pushed_at,default_branch}' > "../$OUT/f2/repo-meta.json"
-# ---------- F-2a: claimed timeline ----------
-git log --format='%ad' --date=iso-strict | sort > "../$OUT/f2/git-dates.txt"
-awk -v s="$START" -v e="$END" '$0>=s && $0<=e' "../$OUT/f2/git-dates.txt" | wc -l
 # ---------- F-2c: tamper check — author vs committer drift ----------
 # the threshold is a SHARE (<1h on >=90% of commits), so emit the denominator too
 git log --format='%H %ad %cd' --date=unix > "../$OUT/f2/commit-dates.txt"
@@ -103,8 +94,6 @@ DRIFT=$(wc -l < "../$OUT/f2/date-drift.txt"); TOTAL=$(wc -l < "../$OUT/f2/commit
 jq -n --argjson d "$DRIFT" --argjson t "$TOTAL" \
   '{drift_violations:$d, commits_total:$t, within_1h_share:(1 - $d/$t)}' \
   | tee "../$OUT/f2/date-drift.json"
-# ---------- F-12: cadence shape ----------
-git log --format=%ad --date=format:'%Y-%m-%d %H' | sort | uniq -c | tee "../$OUT/f2/cadence.txt"
 # ---------- F-3: opening-commit mass ----------
 FIRST=$(git rev-list --max-parents=0 HEAD | tail -1)
 git show --numstat --format= "$FIRST" | awk '{s+=$1} END{print "first_commit_loc="s}'
@@ -137,10 +126,10 @@ scc --by-file --format json . | jq 'sort_by(-.Code) | .[0:5]'
 | Step | Tasks | Gate |
 |---|---|---|
 | 1 | F-1 | no window or roster → Feasibility unscorable, stop |
-| 2 | F-2b first (evidence expires), then F-2a, F-2c, F-12 | F-2b <80%, or F-2a/F-2b disagree, or F-2c drift ≥1h on >10% of commits → capped at 1/5, escalate to organizers |
+| 2 | F-2c | drift ≥1h on >10% of commits → capped at 1/5, escalate to organizers |
 | 3 | F-3, F-4 | F-3 ≥50% or unrostered author → capped at 1/5 |
-| 4 | F-7, F-8, F-10 (auto) | any fail → capped at 2/5 |
-| 5 | F-5, F-9, F-11 | advisory, no cap |
+| 4 | F-7, F-8, F-10, F-13 (auto) | any fail → capped at 2/5 · F-13 stands in when F-7/F-8 cannot run, and never overrides them when they can |
+| 5 | F-5, F-9, F-11, F-14 | advisory, no cap |
 | 6 | F-6, live with authors, seed published | <3/3 explained → capped at 2/5 |
 
 ## Score bands
@@ -151,7 +140,7 @@ scc --by-file --format json . | jq 'sort_by(-.Code) | .[0:5]'
 | 4 | one advisory miss (effort ratio, CI, single-file LOC share) |
 | 3 | builds and runs neutrally, but cadence is one dump or CI absent |
 | 2 | fails clean-build, lockfile, or comprehension probe |
-| 1 | timeline outside window, sources disagree, author/committer drift on >10% of commits, or unrostered authorship |
+| 1 | author/committer drift on >10% of commits, or unrostered authorship |
 
 | Field | Value |
 |---|---|

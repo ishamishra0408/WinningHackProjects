@@ -33,6 +33,7 @@ Core constraint: a naive operator is single-use — each person is cold exactly 
 | U-10 | Error recovery — 4 injected faults | auto | Docker + fault script | u10_faults.sh | faults.json | ≥3 of 4 name cause and fix | — | 
 | U-11 | Doc sufficiency — payoff reached without opening source | auto, from session record | asciinema grep | u11_source_opens.sh | bool | true | — | 
 | U-12 | SEQ per task, 1–7 | operator | none | manual | seq.json | median ≥5 | — | 
+| U-13 | Naive-user walkthrough — can a stranger reach the payoff from the README and the screens alone | agent judge ×3, independent runs | LLM over README + UI captures | u13_naive_walkthrough.sh | walkthrough.json per run — verdict, the step it breaks at, quoted evidence | 3 of 3 runs say the payoff is reachable | 3/5 — **only when all 3 runs agree**; a split is reported and caps nothing | 
 
 ## Metrics beyond tool + script
 
@@ -47,6 +48,17 @@ Core constraint: a naive operator is single-use — each person is cold exactly 
 | blocks_total / blocks_failed | U-6 | a README with one block passing 1/1 is not documented |
 | faults_injected: 4 | U-10 | fixed set, declared in advance, identical across submissions |
 | ui_applicable: bool | U-9 | absent UI scores n/a, never 0 and never 100 |
+
+## Why U-13 needs three runs to cap anything
+
+Every other task here is a measurement: the same repo gives the same answer twice. U-13 is a
+**judgment**, and a judgment can disagree with itself. Running it three times and capping only on
+unanimity does not make it deterministic — it makes disagreement visible, which is the honest
+version of the same thing. A 2–1 split is reported with all three verdicts and caps nothing,
+because a cap the audit cannot reproduce is a cap it cannot defend.
+
+The judge never sees the other tasks' results before it answers, for the reason the rater rows
+give: a grader shown the answer key grades the key.
 
 ## Output schema
 
@@ -130,6 +142,7 @@ steps:
 | 2 | U-6, U-7 | any README block fails → capped at 2/5 |
 | 3 | U-4, U-5, U-8, U-9, U-10 (parallel, auto) | U-5 <3/3 → capped at 3/5 |
 | 4 | U-2, U-3, U-11, U-12 — operators, steps 2–3 results withheld until submitted | U-3 >0 or U-2 >10 min → capped at 3/5 |
+| 5 | U-13, three independent judge runs | 3/3 say unreachable → capped at 3/5 · any split → reported, caps nothing |
 
 ## Score bands
 

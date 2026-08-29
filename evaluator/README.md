@@ -23,8 +23,7 @@ two classes of evidence expire, and both are unrecoverable.
 |-------|-------|----------|
 | **0 — Disqualifiers** | secrets, license, timeline sanity | Precondition for all three contracts. Fail = stop, don't score. |
 | **1 — Fix the targets** | `V-1` criteria · `U-1` payoff · `F-1` window+roster | All three are *unscorable-if-absent*. Freeze every threshold here, before any result is read. |
-| **2 — Capture what expires** | `F-2b` (GitHub Events API) | ⏳ **Run this the moment phase 1 clears.** ~90-day retention; after that the authoritative timeline is gone and only forgeable `git log` dates remain. |
-| **3 — Auto probes** | `V-3 V-4 V-9 V-10` · `F-2a F-2c F-3 F-4 F-7 F-8 F-10 F-12` · `U-4 U-5 U-6 U-7 U-8 U-9 U-10` | All deterministic, all parallelizable. Run each twice — differing results mean the probe is flaky, not that the project passed. |
+| **3 — Auto probes** | `V-2 V-9 V-10` · `F-2c F-3 F-4 F-7 F-8 F-10 F-13 F-14` · `U-4 U-5 U-6 U-7 U-8 U-9 U-10` | All deterministic, all parallelizable. Run each twice — differing results mean the probe is flaky, not that the project passed. |
 | **4 — Naive operators** | `U-2 U-3 U-11 U-12` | 🔥 **One shot per person.** No author present or reachable. Phase-3 results stay withheld. Every session recorded — an unrecorded run is not evidence. |
 | **5 — Human rubric** | `V-2 V-7` (two raters) · `F-6` (live, seeded random) | Only now are phase 2–4 results revealed. `F-6` is the one task where author presence is required rather than disqualifying. |
 
@@ -43,13 +42,13 @@ values — those live in the [contracts](../scopes/README.md), one home each.
 table — one home, machine-readable, and the source `api/runners.py` and `generate-gate.py` both
 read. The table below is kept only as the historical merged view and **disagreed with the
 contracts in four places** when it was checked: it capped `U-1` at 1/5 where the contract says
-*unscorable*, and capped `F-9` and `F-12` where the contract's step 5 says *advisory, no cap*.
+*unscorable*, and capped `F-9` where the contract's step 5 says *advisory, no cap*.
 
 | Scope | Cap 1/5 | Cap 2/5 | Cap 3/5 |
 |-------|---------|---------|---------|
-| **Value** | `V-3` or `V-4` passes when it should break (staged demo) | `V-6` mock ratio over its bar · `V-10` no reachable demo artifact · `V-7` an off-the-shelf equivalent exists | `V-8` claimed number unreproducible |
+| **Value** | `V-2` below its bar against published criteria | `V-10` no reachable demo artifact · `V-7` an off-the-shelf equivalent exists | `V-8` claimed number unreproducible |
 | **Usability** | `U-1` payoff unreachable without the author | `U-6` README blocks don't execute as written | `U-5` environments short · `U-3` undocumented steps present · `U-2` cold clone over its bar |
-| **Feasibility** | `F-2b` timeline under its bar, or `F-2a`/`F-2b` disagree, or `F-2c` drift over its bar, or `F-4` unrostered author, or `F-3` opening commit over its bar | `F-7`/`F-10` clean build or lockfile, or `F-6` comprehension fails | `F-12` one-dump cadence or `F-9` CI absent |
+| **Feasibility** | `F-2c` drift over its bar, or `F-4` unrostered author, or `F-3` opening commit over its bar | `F-7`/`F-10` clean build or lockfile, or `F-6` comprehension fails | `F-12` one-dump cadence or `F-9` CI absent |
 
 `V-1`, `U-1` or `F-1` missing does not cap — it makes that scope **unscorable**. Record it as
 unscorable; do not substitute a low score, which reads as "measured and bad" rather than

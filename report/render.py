@@ -109,7 +109,9 @@ def show(value) -> str:
     if isinstance(value, dict):
         parts = []
         for k, v in value.items():
-            if v is None or k == "note":
+            # per_criterion has its own table above; repeating it here as a
+            # clipped blob is noise, not detail.
+            if v is None or k in ("note", "per_criterion"):
                 continue
             if isinstance(v, (list, tuple)):
                 if not v:
@@ -149,7 +151,12 @@ def project_html(body: dict) -> str:
         starter_sha=body.get("starter_sha"),
         demo_artifact=body.get("demo_artifact"),
         criteria_source=body.get("criteria_source"),
-        criteria=body.get("criteria"))
+        criteria=body.get("criteria"),
+        prior_art=body.get("prior_art"),
+        eval_command=body.get("eval_command"),
+        walkthrough_runs=body.get("walkthrough_runs"),
+        team_size=body.get("team_size"),
+        event_hours=body.get("event_hours"))
     if "tasks" not in result:
         raise SystemExit(f"could not audit: {result.get('error')} — {result.get('detail', '')}")
     tasks, scopes = result["tasks"], runners.summarise(result["tasks"])
@@ -176,6 +183,32 @@ def project_html(body: dict) -> str:
            "<div class='cards'>" + "".join(
                f"<div class='card'><div class='k'>{esc(k)}</div><div class='v'>{esc(v)}</div></div>"
                for k, v in cards) + "</div>"]
+
+    v2 = tasks.get("V-2", {}).get("value")
+    if isinstance(v2, dict) and v2.get("per_criterion"):
+        out.append("<h2>The criteria, and where the project meets them</h2>"
+                   "<p class='sub'>V-1 checks these are well formed; V-2 looks for each one in "
+                   "the project's own source. A citation is a place you can go and read \u2014 "
+                   "it is evidence the criterion was addressed, not a judgment that it was "
+                   "addressed well. That judgment is V-7's, and a human's.</p>")
+        cols = "".join(f"<col style='width:{w}%'>" for w in (6, 26, 26, 10, 32))
+        rows = []
+        for c in v2["per_criterion"]:
+            cites = "<br>".join(
+                f"<code>{esc(h['cited_at'])}</code> <span class='reason'>"
+                f"{esc(', '.join(h.get('distinctive') or h.get('matched') or []))}</span>"
+                for h in (c.get("cited_at") or [])) or "<span class='reason'>nothing in the "\
+                "project's source matched this criterion's terms</span>"
+            rows.append(
+                f"<tr><td class='id'>{esc(c.get('id'))}"
+                f"<div class='st {'PASS' if c['evidenced'] else 'FAIL'}'>"
+                f"{'MET' if c['evidenced'] else 'NOT MET'}</div></td>"
+                f"<td><b>{esc(c.get('text'))}</b></td><td>{esc(c.get('pass_when'))}</td>"
+                f"<td class='reason'>{esc(', '.join(c.get('searched_for') or []))}</td>"
+                f"<td>{cites}</td></tr>")
+        out.append(f"<table>{cols}<thead><tr><th>ID</th><th>Criterion</th><th>Passes when</th>"
+                   "<th>Searched for</th><th>Found at</th></tr></thead><tbody>"
+                   + "".join(rows) + "</tbody></table>")
 
     for scope, summary in scopes.items():
         out.append(f"<h2>{scope.title()} — weight {weights[scope]}</h2>")

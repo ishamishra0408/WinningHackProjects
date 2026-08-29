@@ -18,11 +18,11 @@ evidence does not exist, no matter how good the project is:
 
 | # | Requirement | Why it's unrecoverable | Costs you |
 |---|-------------|------------------------|-----------|
-| 1 | **`F-2b` server-side push timeline, inside the window** | GitHub's Events API records when you actually pushed. You cannot backdate it — `git log` dates are settable, push events are not. | Feasibility capped at **1/5** |
-| 2 | **`F-12` commit hours spread across the window** · **`F-3` opening-commit mass under its bar** | One big dump at the end reads as pre-built work, and the histogram is permanent. | Feasibility capped at **1/5** |
+| 1 | **`F-2c` author and committer dates that agree** | Rewritten history is visible in the log forever, and no later commit repairs it. It records when you actually pushed. You cannot backdate it — `git log` dates are settable, push events are not. | Feasibility capped at **1/5** |
+| 2 | **`F-3` opening-commit mass under its bar** | One big dump at the end reads as pre-built work, and the histogram is permanent. | Feasibility capped at **1/5** |
 | 3 | **`F-6` you can explain 3 randomly-picked functions and predict their output** | Live, seeded-random, with you in the room. Heavy AI codegen you never read fails this. | Feasibility capped at **2/5** |
 | 4 | **`U-2` a genuinely naive operator reaches the payoff inside the time bar** | Naiveté is consumed on first contact. Every teammate is already burned. You need an outsider, and you get one shot per person. | Usability capped at **3/5** |
-| 5 | **`V-3`/`V-4` the demo *breaks* offline and without credentials** | A demo that still works with the network off is staged, and the probe proves it. Wiring real calls late is a rewrite. | Value capped at **1/5** |
+| 5 | **`V-2` the build evidences every criterion the event published** | A project that never did what the network off is staged, and the probe proves it. Wiring real calls late is a rewrite. | Value capped at **1/5** |
 
 Everything else — README blocks, lockfile, one-click, CI — is fixable late. Spend your panic
 budget accordingly.
@@ -43,10 +43,10 @@ budget accordingly.
 
 ### While building
 - [ ] **Commit continuously across ≥8 distinct hours.** Not for hygiene — it's the only
-      evidence that survives (`F-12`, `F-3`).
+      evidence that survives (`F-2c`, `F-3`).
 - [ ] **Keep the demo path real.** Mock ratio under its bar, *over the code the demo actually executes*
-      (`V-6`) — mocks in unexecuted files don't count against you, mocks on the demo path do.
-- [ ] **Demo must touch ≥1 file outside the entrypoint** (`V-5`). A single-file demo has no
+      (`V-2`) — a criterion no line of your source evidences is a criterion you did not meet.
+- [ ] **Every criterion must be evidenced in source** (`V-2`). A criterion with no
       demo path to measure.
 - [ ] **Read the code you ship.** `F-6` is a live comprehension probe on randomly chosen
       functions.

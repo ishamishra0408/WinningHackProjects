@@ -45,8 +45,6 @@ before trusting it**:
 
 | File | Line | Was | Now | Reconstructed from |
 |---|---|---|---|---|
-| value.md | V-6 schema | `"threshold": "` | `"ratio < 0.20"` | the V-6 row's own threshold, `<20% of demo-path LOC` |
-| feasibility.md | F-2a | `'$0>=s && $0` | `'$0>=s && $0<=e'` + count | F-2a's threshold, `≥80% inside window` |
 | feasibility.md | F-2c | `if (d3600)` | `if (d<0) d=-d; if (d>3600)` | F-2c's threshold, `drift <1h` |
 | feasibility.md | F-6 | `--random-source=` | `--random-source=<(yes "$PROBE_SEED")` | the `probe_seed` metric, "must be reproducible" |
 
@@ -64,13 +62,13 @@ Each scope's own *Execution order* table is the source of truth for its caps. Th
 [../builder/README.md](../builder/README.md) restates the five that cannot be retrofitted. A cap
 that changes must change in all three — the contract first.
 
-## Two things that expire
+## Two things that cannot be re-run
 
 These constrain the order you must run tasks in, across scopes:
 
-- **F-2b** reads the GitHub Events API, which retains ~90 days. Miss the window and the
-  authoritative timeline record is gone permanently — a `git log` verdict can't replace it,
-  because author and committer dates are settable by the committer.
+- **U-13** asks a judge the same question three times and caps only on unanimity. Each run must be
+  independent — a judge shown the previous verdict is not a second opinion, it is an echo — so the
+  three cannot be collected by re-reading one answer.
 - **U-2/U-3/U-11/U-12** need a *naive* operator. Naiveté is consumed on first contact: each
   person is cold exactly once, so n is spent, not sampled. Burn your operators on a
   misconfigured run and you cannot re-run the task with the same people.

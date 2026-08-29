@@ -98,15 +98,13 @@ def load_tasks() -> dict[str, dict]:
 # Why a task cannot run from a clone alone. Naming the blocker is the point:
 # an UNEVALUABLE with no reason is indistinguishable from a bug.
 NEEDS = {
-    "V-2": "two independent raters", "V-3": "Docker", "V-4": "Docker",
-    "V-5": "a coverage run of the demo", "V-7": "a timeboxed prior-art search by a rater",
-    "V-8": "the project's own eval script",
+    "F-2b": "the GitHub Events API",
     "U-2": "a naive operator", "U-3": "a recorded operator session",
     "U-5": "a CI matrix over 3 distinct environments", "U-6": "a clean container",
     "U-7": "a clean container", "U-8": "a headless driver", "U-9": "a running UI",
     "U-10": "fault injection into a running system", "U-11": "a recorded operator session",
     "U-12": "an operator questionnaire",
-    "F-2b": "the GitHub Events API", "F-6": "a live probe with the authors present",
+    "F-6": "a live probe with the authors present",
     "F-7": "Docker", "F-8": "Docker",
 }
 
@@ -131,7 +129,15 @@ def _loc(repo: str, files: list[str]) -> int:
 # field -- not the repo. Scanning only the README answers "is it in the tree",
 # which is a different question and the reason V-10 read FAIL on a project whose
 # video was submitted and accepted.
-MEDIA_IN_README = re.compile(r"!\[|<img|youtu\.be|youtube\.com|loom\.com|vimeo|\.mp4|\.webm|\.gif", re.I)
+# A demo artifact is whatever a judge watches, and most of them are LINKS: a
+# deck, a hosted build, a published artifact page. Matching only image and
+# video file extensions read Redline's README -- which carries both a deck and
+# a live screens link -- as having no artifact at all.
+MEDIA_IN_README = re.compile(
+    r"!\[|<img|youtu\.be|youtube\.com|loom\.com|vimeo|\.mp4|\.webm|\.gif|\.mov"
+    r"|\.pdf|docs\.google\.com|drive\.google\.com|figma\.com|canva\.com|pitch\.com"
+    r"|claude\.ai/(?:code/)?artifact|vercel\.app|netlify\.app|streamlit\.app"
+    r"|\bdeck\b|\bdemo video\b|\bwalkthrough\b", re.I)
 
 
 def _media_duration(path: pathlib.Path) -> float | None:
@@ -281,10 +287,234 @@ def _criteria(out: dict, declared: list | None) -> str | None:
     return sources.pop() if len(sources) == 1 else None
 
 
+# ---- V-2 ---------------------------------------------------------------------
+# V-1 says the criteria are well formed. V-2 asks the next question: does the
+# project actually DO each of them? Every criterion's pass_when is turned into
+# search terms and looked for in the project's own source, and each hit ships
+# the file and the line it was found on -- a claim you cannot check is a claim
+# you can only believe.
+#
+# This finds evidence, not merit. A criterion satisfied by one decorative import
+# looks identical here to one the whole project is built around; that judgment
+# is V-7's and a rater's, and this does not pretend to make it.
+STOPWORDS = frozenset("""a an and are as at be by for from has have in is it its of on or that
+the to was were will with your you not no does do can must should each any all one two three
+model models call calls called using use used real demo path stub project repo code line""".split())
+
+
+def _terms(criterion: dict) -> list[str]:
+    text = " ".join(str(criterion.get(k) or "") for k in ("text", *PASS_CONDITION_KEYS))
+    words = re.findall(r"[A-Za-z][A-Za-z0-9_.-]{2,}", text.lower())
+    return sorted({w for w in words if w not in STOPWORDS}, key=len, reverse=True)[:8]
+
+
+def _criteria_evidence(out: dict, repo: str, own: list, criteria: list | None) -> None:
+    if not criteria:
+        out["V-2"].update(state=ABSENT, value=None, verdict=None,
+                          reason="no criteria supplied -- V-2 scores against V-1's output, so "
+                                 "without it there is nothing to score against")
+        return
+    haystack = []
+    for f in own[:400]:
+        try:
+            body = (pathlib.Path(repo) / f).read_text(encoding="utf-8", errors="ignore")
+        except OSError:
+            continue
+        haystack.append((f, body.lower().splitlines()))
+
+    # How many words match is the wrong question. "mistral" appearing once is
+    # strong; "app" appearing twice is noise. A term found in at most a fifth of
+    # the files is DISTINCTIVE and stands alone as evidence; common terms have
+    # to arrive in pairs. Requiring two words missed the Mistral criterion on a
+    # repo that calls Mistral in two files, while matching a slide deck on
+    # "app" and "checks".
+    def distinctive(term: str) -> bool:
+        seen = sum(1 for _, lines in haystack if any(term in l for l in lines))
+        return bool(haystack) and seen <= max(1, len(haystack) // 5)
+
+    per, met = [], 0
+    for c in criteria:
+        terms = _terms(c)
+        rare = {t for t in terms if distinctive(t)}
+        hits = []
+        for f, lines in haystack:
+            for n, line in enumerate(lines, 1):
+                matched = [t for t in terms if t in line]
+                if any(t in rare for t in matched) or len(matched) >= 2:
+                    hits.append({"cited_at": f"{f}:{n}", "matched": matched,
+                                 "distinctive": sorted(set(matched) & rare) or None})
+                    break
+            if len(hits) >= 3:
+                break
+        per.append({"id": c.get("id"), "text": c.get("text"),
+                    "pass_when": next((c[k] for k in PASS_CONDITION_KEYS if c.get(k)), None),
+                    "searched_for": terms, "distinctive_terms": sorted(rare) or None,
+                    "evidenced": bool(hits), "cited_at": hits or None})
+        met += bool(hits)
+    share = met / len(criteria)
+    out["V-2"].update(state=MEASURED, verdict="PASS" if share >= 0.75 else "FAIL", reason=None,
+                      value={"criteria": len(criteria), "evidenced": met,
+                             "share": round(share, 3), "per_criterion": per})
+
+
+# ---- V-7 ---------------------------------------------------------------------
+def _prior_art(out: dict, declared) -> None:
+    """The search is an agent's job; verifying what it returned is this one's."""
+    if declared is None:
+        out["V-7"].update(state=ABSENT, value=None, verdict=None,
+                          reason="no prior-art search supplied -- pass a list of the closest "
+                                 "existing tools, or [] to declare that none was found")
+        return
+    if declared == [] or declared == "none":
+        out["V-7"].update(state=MEASURED, value={"prior_art": [], "searched": True},
+                          verdict="PASS", reason=None)
+        return
+    links, unreachable = [], []
+    for item in declared if isinstance(declared, list) else [declared]:
+        url = item.get("url") if isinstance(item, dict) else str(item)
+        ok, why = _reachable(url)
+        links.append({"url": url, "reachable": ok, "detail": why,
+                      "delta": item.get("delta") if isinstance(item, dict) else None})
+        if ok is False:
+            unreachable.append(url)
+    out["V-7"].update(state=MEASURED, reason=None,
+                      value={"prior_art": links, "count": len(links),
+                             "unreachable": unreachable or None},
+                      verdict="FAIL")
+
+
+# ---- V-8 ---------------------------------------------------------------------
+def _reproduce_claim(out: dict, repo: str, command: str | None, claim: str | None) -> None:
+    """Run ONLY a command the caller named. Supplying it is the authorization --
+    nothing is discovered from the README and run, because pointing this at a
+    stranger's repo would then execute their code on your machine unread."""
+    if not command:
+        out["V-8"].update(state=ABSENT, value=None, verdict=None,
+                          reason="no eval_command supplied -- this runs only a command you name, "
+                                 "never one it found in the README")
+        return
+    if not claim:
+        out["V-8"].update(state=MEASURED, value={"claim": None}, verdict=None,
+                          reason="the contract records claim: none rather than failing a project "
+                                 "that made no numeric claim")
+        return
+    try:
+        proc = subprocess.run(command, shell=True, cwd=repo, capture_output=True,
+                              text=True, errors="ignore", timeout=600)
+    except subprocess.TimeoutExpired:
+        out["V-8"].update(state=UNEVALUABLE, value={"command": command}, verdict=None,
+                          reason="the eval command did not finish inside 10 minutes")
+        return
+    printed = (proc.stdout or "") + (proc.stderr or "")
+    # The contract's threshold is "within +/-20% of claim", so this compares
+    # MAGNITUDES. A substring test would call 207 a match for 207,593,826,804,
+    # and did -- it also has to be given the matched figure rather than the
+    # whole README line the figure was found on.
+    want = re.search(r"\d+(?:\.\d+)?", claim.replace(",", ""))
+    target = float(want.group(0)) if want else None
+    printed_numbers = [float(n) for n in re.findall(r"\d+(?:\.\d+)?", printed.replace(",", ""))]
+    # A command that exited non-zero did not reproduce anything, so its output is
+    # not compared: a failed run that happens to print a nearby number would
+    # otherwise read as a reproduction. This fired on the first real run --
+    # exit 1, and 26.0 in an error message sits inside 20% of 31.2.
+    if proc.returncode != 0:
+        out["V-8"].update(
+            state=MEASURED, verdict="FAIL",
+            reason=f"the command exited {proc.returncode}, so nothing was reproduced -- its "
+                   f"output is not compared against the claim",
+            value={"command": command, "exit_code": proc.returncode, "claim": claim,
+                   "claim_number": target, "within_20_percent": None,
+                   "output_tail": printed.strip()[-400:] or None})
+        return
+    nearest = min(printed_numbers, key=lambda n: abs(n - target)) if (target and printed_numbers) else None
+    within = nearest is not None and abs(nearest - target) <= abs(target) * 0.20
+    # Nearest-match over a long output is weak: print enough numbers and one of
+    # them lands inside any tolerance. Say so rather than let the flag stand alone.
+    weak = within and len(printed_numbers) > 20
+    out["V-8"].update(
+        state=MEASURED, reason=None,
+        value={"command": command, "exit_code": 0,
+               "claim": claim, "claim_number": target,
+               "nearest_number_printed": nearest,
+               "within_20_percent": within,
+               "numbers_printed": len(printed_numbers),
+               "match_may_be_coincidental": weak or None,
+               "output_tail": printed.strip()[-400:] or None},
+        verdict="PASS" if within else "FAIL")
+
+
+# ---- U-13 --------------------------------------------------------------------
+def _naive_walkthrough(out: dict, runs: list | None) -> None:
+    """Three independent judge runs. A judgment can disagree with itself, so it
+    caps only when all three agree -- a split is reported and caps nothing."""
+    if not runs:
+        out["U-13"].update(state=ABSENT, value=None, verdict=None,
+                           reason="no walkthrough runs supplied -- pass three independent "
+                                  "judgments, each {reachable: bool, breaks_at, evidence}")
+        return
+    verdicts = [bool(r.get("reachable")) for r in runs if isinstance(r, dict)]
+    value = {"runs": len(verdicts), "reachable_votes": sum(verdicts),
+             "unanimous": len(set(verdicts)) == 1 and len(verdicts) >= 3,
+             "judgments": [{"reachable": r.get("reachable"), "breaks_at": r.get("breaks_at"),
+                            "evidence": str(r.get("evidence") or "")[:300]}
+                           for r in runs if isinstance(r, dict)]}
+    if len(verdicts) < 3:
+        out["U-13"].update(state=UNEVALUABLE, value=value, verdict=None,
+                           reason=f"{len(verdicts)} of the 3 required runs supplied")
+        return
+    if not value["unanimous"]:
+        out["U-13"].update(state=MEASURED, value=value, verdict=None, cap=None, blocking=False,
+                           reason="the three runs disagree, so this caps nothing -- a cap the "
+                                  "audit cannot reproduce is a cap it cannot defend")
+        return
+    out["U-13"].update(state=MEASURED, value=value, reason=None,
+                       verdict="PASS" if verdicts[0] else "FAIL")
+
+
+# ---- F-13 --------------------------------------------------------------------
+HOME_PATH = re.compile(r"""["'](?:/Users/|/home/|[A-Z]:\\\\)[^"'\n]{3,}["']""")
+LOCALHOST = re.compile(r"(?:localhost|127\.0\.0\.1)(?::\d+)?", re.I)
+RUNTIME_PIN = ("​.python-version", ".nvmrc", ".tool-versions", "runtime.txt", "rust-toolchain.toml")
+START_CMD = re.compile(
+    r"^\s*(?:\$\s*)?((?:python3?|node|npm|pnpm|yarn|streamlit|uvicorn|go|cargo|make|docker)"
+    r"[^\n`]*)", re.M)
+
+
+def _portability(out: dict, repo: str, files: list, own: list, has_lock: bool,
+                 readme_text: str) -> None:
+    pins = [f for f in files if f in RUNTIME_PIN or f in ("Dockerfile", "pyproject.toml",
+                                                          "package.json", "go.mod")]
+    start = START_CMD.search(readme_text or "")
+    offenders = []
+    for f in own[:400]:
+        try:
+            body = (pathlib.Path(repo) / f).read_text(encoding="utf-8", errors="ignore")
+        except OSError:
+            continue
+        for n, line in enumerate(body.splitlines(), 1):
+            if HOME_PATH.search(line) or LOCALHOST.search(line):
+                offenders.append(f"{f}:{n}")
+            if len(offenders) >= 10:
+                break
+        if len(offenders) >= 10:
+            break
+    ok = has_lock and bool(pins) and bool(start) and not offenders
+    out["F-13"].update(
+        state=MEASURED, reason=None,
+        value={"lockfile": has_lock, "runtime_pins": pins[:5] or None,
+               "start_command": start.group(1).strip() if start else None,
+               "machine_specific_lines": offenders or None,
+               "note": "a static stand-in for F-7/F-8 and weaker than either -- it reads the "
+                       "source, it does not start the thing"},
+        verdict="PASS" if ok else "FAIL")
+
+
 def audit_repo(repo_url: str, window_end: str | None = None, window_days: int = 1,
                starter_sha: str | None = None, demo_artifact: dict | None = None,
                criteria_source: str | None = None, local_path: str | None = None,
-               criteria: list | None = None) -> dict:
+               criteria: list | None = None, prior_art: list | None = None,
+               eval_command: str | None = None, walkthrough_runs: list | None = None,
+               team_size: int | None = None, event_hours: float | None = None) -> dict:
     """Run every task computable from a clone. Everything else is UNEVALUABLE."""
     out = {tid: {**meta, "state": UNEVALUABLE, "reason": NEEDS.get(tid, "not implemented"),
                  "value": None, "verdict": None} for tid, meta in load_tasks().items()}
@@ -354,28 +584,12 @@ def audit_repo(repo_url: str, window_end: str | None = None, window_days: int = 
                       "share": round(biggest[0] / loc, 3) if loc else None},
              bool(loc) and biggest[0] / loc <= 0.30)
 
-        # F-12  cadence
-        hours = len(set(_git(repo, "log", "--format=%ad", "--date=format:%Y-%m-%d %H").splitlines()))
-        set_("F-12", {"distinct_commit_hours": hours}, hours >= 8)
 
         # F-4  every author named -- the roster itself is the caller's to supply
         authors = [l.strip() for l in _git(repo, "shortlog", "-sne", "--all").splitlines() if l.strip()]
         out["F-4"].update(state=ABSENT, value={"authors_found": len(authors), "authors": authors[:20]},
                           reason="no entrant roster supplied; F-1 must fix it first")
 
-        # F-2a  claimed timeline -- undefined without a window, which is F-1's job
-        if window_end:
-            end = date.fromisoformat(window_end)
-            start = end - timedelta(days=max(window_days, 1) - 1)
-            days = [l[:10] for l in _git(repo, "log", "--format=%ad", "--date=format:%Y-%m-%d").splitlines() if l]
-            inside = sum(1 for d in days if start.isoformat() <= d <= end.isoformat())
-            set_("F-2a", {"inside": inside, "commits_total": len(days),
-                          "share": round(inside / len(days), 3),
-                          "window": [start.isoformat(), end.isoformat()],
-                          "window_days": window_days},
-                 inside / len(days) >= 0.80)
-        else:
-            out["F-2a"].update(state=ABSENT, reason="no window supplied; F-1 must fix it first")
 
         # F-9 / F-10  presence checks
         set_("F-9", {"workflows": [f for f in files if f.startswith(".github/workflows")]},
@@ -405,11 +619,42 @@ def audit_repo(repo_url: str, window_end: str | None = None, window_days: int = 
                 out[tid].update(state=ABSENT, reason="no README in the repository")
             _demo_artifact(out, None, "", demo_artifact)
         else:
-            claim = re.search(r"\d+(?:\.\d+)?\s*(?:x\b|%|ms|req/s|faster|cheaper)", text)
-            set_("V-9", {"claim": claim.group(0) if claim else None}, bool(claim))
+            claim, cited_at, claim_line = None, None, None
+            for n, line in enumerate(text.splitlines(), 1):
+                m = re.search(r"\d+(?:\.\d+)?\s*(?:x\b|%|ms|req/s|faster|cheaper)", line)
+                if m:
+                    claim, cited_at, claim_line = m.group(0), f"{readme}:{n}", line.strip()[:200]
+                    break
+            # A number with no citation can only be believed. Ship where it was read.
+            set_("V-9", {"claim": claim, "cited_at": cited_at, "quoted": claim_line},
+                 bool(claim))
             _demo_artifact(out, set_, text, demo_artifact)
             oneclick = [f for f in files if f in ("Dockerfile", "docker-compose.yml", ".devcontainer/devcontainer.json")]
             set_("U-4", {"entrypoints": oneclick}, bool(oneclick))
+
+        _criteria_evidence(out, repo, own, criteria)
+        _prior_art(out, prior_art)
+        _reproduce_claim(out, repo, eval_command,
+                         out["V-9"]["value"].get("claim")
+                         if isinstance(out["V-9"]["value"], dict) else None)
+        _naive_walkthrough(out, walkthrough_runs)
+        _portability(out, repo, files, own, bool(locks), text)
+
+        # F-14  built mass against the hours that existed. Advisory: heavy AI
+        # codegen moves this ceiling, so a high number is a flag to look at, not
+        # a finding on its own.
+        if team_size and event_hours:
+            available = team_size * event_hours
+            rate = loc / available if available else None
+            set_("F-14", {"own_loc": loc, "team_size": team_size, "event_hours": event_hours,
+                          "available_person_hours": available,
+                          "own_loc_per_person_hour": round(rate, 1) if rate else None,
+                          "note": "advisory -- AI codegen raises this legitimately; it flags, "
+                                  "it does not fail"},
+                 rate is not None and rate <= 150)
+        else:
+            out["F-14"].update(state=ABSENT, reason="no team_size and event_hours supplied; "
+                                                    "F-1 fixes the window these come from")
 
         return {"repo": repo_url, "commits": commits, "own_loc": loc,
                 "vendored_loc": vendored_loc, "criteria_source": criteria_source,
