@@ -8,7 +8,7 @@
 | placement | 1st / 2nd / 3rd |
 | audited on | YYYY-MM-DD |
 | auditor(s) | |
-| w_value chosen | **frozen before any result was read:** |
+| weights used | from the [scopes table](../scopes/README.md) · **confirm they were frozen before any result was read** |
 | F-2b captured within 90 days? | yes / no — *if no, the timeline verdict is `git`-only and unfalsifiable* |
 | naive operators available | n = |
 
@@ -77,9 +77,9 @@ implemented it → proof.
 
 | Scope | Raw /5 | Cap triggered | Final /5 | Weight |
 |-------|--------|---------------|----------|--------|
-| Value | | | | *w_value* |
-| Usability | | | | 25 |
-| Feasibility | | | | 20 |
+| Value | | | | *per scopes table* |
+| Usability | | | | *per scopes table* |
+| Feasibility | | | | *per scopes table* |
 | **Overall** | | | | |
 
 ## Where it failed, and how it could have won

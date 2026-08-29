@@ -120,13 +120,13 @@ flowchart TD
     subgraph Serve["api/ — stdlib, reads the contracts at call time"]
         EP1["POST /evaluateproject<br/>MEASURED · ABSENT · UNEVALUABLE per task"]
         EP2["POST /evaluatespec<br/>19 D-checks → ordered workflow"]
-        REF["overall: null<br/>w_value unset · caps live in prose<br/>UNEVALUABLE is not a pass"]
+        REF["overall: null<br/>caps live in prose<br/>UNEVALUABLE is not a pass"]
     end
 
     subgraph Compute["Score computation"]
         JSONL[value / usability / feasibility .jsonl<br/>one record per task + evidence_path]
         CAPS["S_k = min(rubric, lowest triggered cap)"]
-        OVR["Overall = (S_v·w_v + S_u·25 + S_f·20) / (5·(w_v+45))<br/>w_v frozen before any result is read"]
+        OVR["Overall = (S_v·w_v + S_u·w_u + S_f·w_f) / (5·Σw)<br/>weights: one home, the scopes table"]
     end
 
     C --> GG --> PSG
@@ -164,9 +164,12 @@ behind both diagrams live in [requirements.md](requirements.md).
 
 ## Open questions
 
-**`w_value` is unset.** The source contracts weight Usability 25 and Feasibility 20 but never state
-Value's weight. Nothing here invents one — `/evaluateproject` returns `overall: null` and says why.
-Set it before running a weighted total, and record it in the scorecard *before* reading any result.
+**The weights are the operator's, not the source's.** Value 30 · Usability 30 · Feasibility 40,
+set 2026-08-29. They fill the 100-point budget the source left 55 short, but they override two
+weights the source did state, and they were set *after* results had been read — the freeze rule the
+contracts demand was not met. Both facts are recorded in the
+[weight provenance note](scopes/README.md). `/evaluateproject` still returns `overall: null`, now
+for the two remaining reasons: caps live in prose, and `UNEVALUABLE` is not a pass.
 
 **Nothing here explains why anyone wins.** 28 winners and 0 losers is a set selected on the
 outcome. The gallery harvest makes ~1,050 non-winning projects reachable; sampling them is the one

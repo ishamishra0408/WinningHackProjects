@@ -36,6 +36,19 @@ VENDORED = re.compile(r"node_modules/|/lib/react|vendor/|dist/|build/|\.min\.|th
 MEASURED, ABSENT, UNEVALUABLE = "MEASURED", "ABSENT", "UNEVALUABLE"
 
 
+def load_weights() -> dict:
+    """Scope weights, read from their one home: the scopes/README.md table."""
+    text = (ROOT / "scopes" / "README.md").read_text()
+    out: dict[str, int] = {}
+    for scope in ("Value", "Usability", "Feasibility"):
+        m = re.search(rf"^\|\s*\*\*{scope}\*\*\s*\|\s*\*\*(\d+)\*\*", text, re.M)
+        if m:
+            out[scope.lower()] = int(m.group(1))
+    out["total"] = sum(v for k, v in out.items() if k != "total")
+    out["source"] = "scopes/README.md, read at call time"
+    return out
+
+
 def load_tasks() -> dict[str, dict]:
     """Read every task id, its threshold and whether it blocks, from the contracts."""
     tasks: dict[str, dict] = {}

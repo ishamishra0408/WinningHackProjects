@@ -101,8 +101,8 @@ class Handler(BaseHTTPRequestHandler):
             "scopes": scopes,
             "tasks": result["tasks"],
             "overall": None,
+            "weights": runners.load_weights(),
             "overall_refused_because": [
-                "w_value is unset in the source contracts; a weight chosen now is a weight chosen to produce an answer",
                 "caps are stated in prose in the contracts, so a /5 emitted here would be a second home for them",
                 "UNEVALUABLE is not a pass -- tasks needing Docker, an operator or the Events API did not run",
             ],

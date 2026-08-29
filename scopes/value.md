@@ -2,7 +2,7 @@
 
 Audit contract, captured from source — see [provenance](README.md#provenance). Deterministic tasks run before any human rubric, and no author scores their own project.
 
-**Weight:** not stated in the source. Usability is 25 and Feasibility is 20; Value's weight is unset — see [../evaluator/README.md](../evaluator/README.md).
+**Weight:** not stated in the source; set by the operator — see the [scopes table](README.md) and its provenance note.
 
 ## Contract header
 

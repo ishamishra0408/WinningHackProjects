@@ -1,6 +1,6 @@
 # Scope: Usability
 
-Audit contract, captured from source — see [provenance](README.md#provenance). **Weight: 25.**
+Audit contract, captured from source — see [provenance](README.md#provenance). **Weight: see the [scopes table](README.md).**
 
 Core constraint: a naive operator is single-use — each person is cold exactly once, so n is *consumed*, not sampled.
 
@@ -15,7 +15,7 @@ Core constraint: a naive operator is single-use — each person is cold exactly 
 | invariant 2 | automated tasks run first; operator results collected before automated results are shown to anyone scoring |
 | invariant 3 | every operator session is recorded — an unrecorded run is not evidence |
 | output | usability.jsonl + session casts |
-| verdict | Usability score /5 (weight 25) · blocking pass/fail |
+| verdict | Usability score /5 · blocking pass/fail |
 
 ## Usability tasks
 

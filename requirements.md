@@ -76,8 +76,14 @@ Caps compose by minimum, never by subtraction — one triggered 1/5 cap dominate
 **Overall**, from [evaluator/README.md](evaluator/README.md), normalised to [0,1]:
 
 ```
-Overall(w_v) = (S_v·w_v + S_u·25 + S_f·20) / (5·(w_v + 45))
+Overall = (S_v·w_v + S_u·w_u + S_f·w_f) / (5·(w_v + w_u + w_f))
 ```
+
+**SUPERSEDED 2026-08-29.** The analysis below held `w_u = 25` and `w_f = 20` fixed and solved for
+the one unset weight. The operator has since set all three — **30 · 30 · 40**, in the
+[scopes table](scopes/README.md) — so `w_value` is no longer the free variable. The maths is kept
+because its conclusion is what matters and it did not change: **the weights are a ranking
+decision**, which is why they must be frozen before results are read. They were not.
 
 **Sensitivity to the unset weight** (the tradeoff the source never settled):
 
@@ -98,7 +104,7 @@ w_v = 35 is the exact indifference point for this pair — so the choice of `w_v
 ranking decision, which is why it must be frozen before any result is read (the repo's own rule,
 now with the math showing why).
 
-**Tradeoff table for freezing `w_value`** (a convention, labelled as one — NFR-9):
+**Tradeoff table for freezing `w_value`** (a convention, labelled as one — NFR-9). *Historical: written when `w_u` was 25; the operator chose 30, the row this table recommended.*
 
 | Option | Rationale | Risk |
 |---|---|---|
@@ -109,6 +115,12 @@ now with the math showing why).
 ds-ic recommendation: freeze **w_v = 30** as a labelled convention, record it in the scorecard
 before the first audit, and never revisit it between audits of the same event (a weight moved
 between projects is a weight chosen to produce an answer).
+
+**Outcome:** the operator set `w_v = 30`, matching this recommendation, and also moved
+`w_u` 25 → 30 and `w_f` 20 → 40, which this analysis did not cover and no source supports. Under
+the source's own numbers the first audited project (Redline, `S = 4·3·2`) scores **0.67**; under the
+new weights it scores **0.58** — the operator's choice cost their own project 9 points, which is
+the opposite signature of a weight chosen to pass.
 
 Denominator caution (c01): `F-2b`'s share is computed over **push events**, but the claim is
 about when work happened — a single in-window push of pre-authored commits passes it. The
@@ -129,4 +141,5 @@ Full catalog run reported in the session; the two findings that survive with evi
 | Date | Change |
 |---|---|
 | 2026-08-29 | Initial FR/NFR set; metric-design, qe-ic-advisor, ds-ic passes; ousterhout module findings. All threshold-touching rows are proposals pending contract-first edits. |
+| 2026-08-29 | **Weights set by the operator: Value 30 · Usability 30 · Feasibility 40.** Fills the 100-point budget the source left 55 short. `w_v = 30` matches this file's own ds-ic recommendation; `w_u` 25 → 30 and `w_f` 20 → 40 override weights the source did state. **The freeze rule was not met** — they were set after the Redline audit and the 28-winner pass, and that is recorded in scopes/README.md rather than hidden. |
 | 2026-08-29 | Merged with the audit branch. 35 tasks → **36** (`V-10` demo artifact, blocking; `V-7` promoted; `V-9` demoted to advisory at 6/28 winner pass). Design card 18 → **19** rows (`D19`). **FR-10's calibration has now run** — 28 winners, 0 pass — and is recorded in research/winner-audits.md. Added FR-11 (demo artifact, wherever submitted) and FR-12 (the API). Three contract faults the calibration exposed are fixed: `vendored_loc` out of every LOC denominator, `starter_sha` on `F-3`, `window_kind` on `F-1`/`F-2a`/`F-2b`. |

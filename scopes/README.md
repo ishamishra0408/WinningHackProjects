@@ -3,11 +3,15 @@
 Three audit contracts, captured verbatim from source. Each scores a project **/5** with
 blocking tasks that cap the score regardless of how well everything else went.
 
+**This table is the one home for the scope weights.** Every other file cites the scope, never the
+number.
+
 | Scope | Weight | Asks | Contract |
 |-------|--------|------|----------|
-| **Value** | *unset* | Does it do something real, against this event's actual criteria? | [value.md](value.md) |
-| **Usability** | 25 | Can a stranger reach the payoff from a cold clone? | [usability.md](usability.md) |
-| **Feasibility** | 20 | Was it actually built, by these people, in this window? | [feasibility.md](feasibility.md) |
+| **Value** | **30** | Does it do something real, against this event's actual criteria? | [value.md](value.md) |
+| **Usability** | **30** | Can a stranger reach the payoff from a cold clone? | [usability.md](usability.md) |
+| **Feasibility** | **40** | Was it actually built, by these people, in this window? | [feasibility.md](feasibility.md) |
+| | **100** | | |
 
 ## Reading the task IDs
 
@@ -73,8 +77,25 @@ These constrain the order you must run tasks in, across scopes:
 
 See [../evaluator/README.md](../evaluator/README.md) for the merged run order that respects both.
 
-## Known gap
+## Weight provenance — read this before citing a total
 
-The source states Usability = 25 and Feasibility = 20 but never states Value's weight.
-45 of 100 is accounted for; the remaining 55 covers Value plus any scopes not captured here.
-Nothing in this repo invents a number for it — pick one before running a weighted total.
+The **source contracts** stated Usability = 25 and Feasibility = 20 and never stated Value's
+weight, leaving 55 of 100 unaccounted.
+
+The weights in the table above are **the operator's, not the source's**. On 2026-08-29 they were
+set to Value 30 · Usability 30 · Feasibility 40, which:
+
+- **fills the budget** — 100 points, nothing unaccounted, which the source never achieved;
+- **matches the `w_value = 30` recommendation** already reached by the ds-ic pass in
+  [../requirements.md](../requirements.md);
+- **overrides two weights the source did state.** Usability moved 25 → 30 and Feasibility 20 → 40.
+  Those are departures from the source, not gap-filling, and no source supports them.
+
+**The freeze rule was not met.** The contracts require a weight be recorded before any result is
+read. These were set after the Redline audit (Value 4 · Usability 3 · Feasibility 2) and after the
+28-winner pass. Recorded here rather than hidden, because a weight chosen after results is exactly
+what the rule exists to catch.
+
+Mitigating, and checkable: under the source's own numbers Redline scores **0.67**; under these it
+scores **0.58**. The choice made the operator's own project score *worse*, which is the opposite of
+a weight chosen to pass.

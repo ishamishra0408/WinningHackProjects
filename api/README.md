@@ -57,17 +57,19 @@ always return it from a clone alone. A caller that treats them as passes has inv
 ### It returns no overall, on purpose
 
 ```json
+"weights": {"value": 30, "usability": 30, "feasibility": 40, "total": 100,
+            "source": "scopes/README.md, read at call time"},
 "overall": null,
 "overall_refused_because": [
-  "w_value is unset in the source contracts",
   "caps are stated in prose in the contracts, so a /5 here would be a second home for them",
   "UNEVALUABLE is not a pass"
 ]
 ```
 
-Per scope you get `passed`, `failed`, `failed_blocking` and `capped`. **The number is yours to
-compute once you have set `w_value`** — and the contracts require you to set it before reading any
-result.
+Per scope you get `passed`, `failed`, `failed_blocking` and `capped`, plus the `weights` read from
+the [scopes table](../scopes/README.md) at call time. **The scope `/5` is still yours to assign** —
+the caps that produce it are stated in prose in the contracts, and emitting them here would be a
+second home for them.
 
 **It does not predict winning.** 28 winning repos fail these contracts. This says whether a project
 holds up, not whether it wins.

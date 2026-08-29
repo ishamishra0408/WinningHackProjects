@@ -52,11 +52,12 @@ unscorable; do not substitute a low score, which reads as "measured and bad" rat
 ## Overall verdict
 
 ```
-overall = (value/5 × w_value + usability/5 × 25 + feasibility/5 × 20) / (w_value + 45)
+overall = (value/5 × w_v + usability/5 × w_u + feasibility/5 × w_f) / (w_v + w_u + w_f)
 ```
 
-⚠️ `w_value` is not set by the source contracts. Pick and record it in the scorecard before
-reading any result — a weight chosen after the fact is a weight chosen to produce an answer.
+The weights live in **one place**: the [scopes table](../scopes/README.md). They are the
+operator's, not the source's — read the provenance note there before citing any total, including
+why the freeze rule was not met for the weights currently set.
 
 ## Reading a result
 

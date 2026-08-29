@@ -1,6 +1,6 @@
 # Scope: Feasibility
 
-Audit contract, captured from source — see [provenance](README.md#provenance). **Weight: 20.**
+Audit contract, captured from source — see [provenance](README.md#provenance). **Weight: see the [scopes table](README.md).**
 
 **This scope is forensic build-verification — *was it built, by these people, in this window*. It is
 not the "feasibility" of a judging rubric, which asks whether a thing can be built and scaled.
