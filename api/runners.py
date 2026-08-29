@@ -236,19 +236,22 @@ def _demo_artifact(out: dict, set_, readme_text: str, declared: dict | None) -> 
 
 def audit_repo(repo_url: str, window_end: str | None = None, window_days: int = 1,
                starter_sha: str | None = None, demo_artifact: dict | None = None,
-               criteria_source: str | None = None) -> dict:
+               criteria_source: str | None = None, local_path: str | None = None) -> dict:
     """Run every task computable from a clone. Everything else is UNEVALUABLE."""
     tasks = apply_cap_conditions(load_tasks(), {"criteria_source": criteria_source})
     out = {tid: {**meta, "state": UNEVALUABLE, "reason": NEEDS.get(tid, "not implemented"),
                  "value": None, "verdict": None} for tid, meta in tasks.items()}
-    tmp = tempfile.mkdtemp(prefix="wh-audit-")
-    repo = os.path.join(tmp, "src")
+    # local_path audits a clone you already have -- used by the batch runner and
+    # by anyone re-auditing 28 repos without cloning them 28 times.
+    tmp = None if local_path else tempfile.mkdtemp(prefix="wh-audit-")
+    repo = local_path or os.path.join(tmp, "src")
     try:
-        env = {**os.environ, "GIT_TERMINAL_PROMPT": "0", "GIT_LFS_SKIP_SMUDGE": "1"}
-        clone = subprocess.run(["git", "clone", "--quiet", repo_url, repo],
-                               capture_output=True, text=True, env=env, timeout=300)
-        if clone.returncode:
-            return {"error": "clone failed", "detail": clone.stderr.strip()[:300], "tasks": out}
+        if not local_path:
+            env = {**os.environ, "GIT_TERMINAL_PROMPT": "0", "GIT_LFS_SKIP_SMUDGE": "1"}
+            clone = subprocess.run(["git", "clone", "--quiet", repo_url, repo],
+                                   capture_output=True, text=True, env=env, timeout=300)
+            if clone.returncode:
+                return {"error": "clone failed", "detail": clone.stderr.strip()[:300], "tasks": out}
 
         files = _git(repo, "ls-files").splitlines()
         own = [f for f in files if SRC.search(f) and not VENDORED.search(f)]
@@ -354,7 +357,8 @@ def audit_repo(repo_url: str, window_end: str | None = None, window_days: int = 
         return {"repo": repo_url, "commits": commits, "own_loc": loc,
                 "vendored_loc": vendored_loc, "tasks": out}
     finally:
-        shutil.rmtree(tmp, ignore_errors=True)
+        if tmp:
+            shutil.rmtree(tmp, ignore_errors=True)
 
 
 def apply_cap_conditions(tasks: dict, context: dict | None) -> dict:

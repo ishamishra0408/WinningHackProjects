@@ -137,6 +137,56 @@ Still open: neither rubric's **Impact** criterion (25% + 2 of 5 PRIME letters) h
 a deliberate omission, not an oversight — it is a judgment about the product, and nothing in a repo
 measures it.
 
+## Re-run under the machine-readable caps
+
+The matrix above asks *which thresholds did each winner miss?*. Once the contracts' `Caps at`
+column became machine-readable, a second and different question could be asked: **given those
+caps, what ceiling does each scope land on?** A missed threshold only costs a score if the
+contract says it caps something.
+
+Reproduce with:
+
+```bash
+python3 research/rerun-winners.py --clones /tmp/winners     # 28 clones, keyed by winners-28.json
+```
+
+| Scope | Capped | At what |
+|---|---|---|
+| Feasibility | **17 / 28** | 6 at `1/5`, 11 at `2/5` |
+| Value | **0 / 28** | — |
+| Usability | **0 / 28** | — |
+
+| Blocking task | Failed |
+|---|---|
+| `F-10` lockfile integrity → `2/5` | 15 / 28 |
+| `F-3` opening-commit mass → `1/5` | 6 / 28 |
+| `F-2c` author/committer drift → `1/5` | 1 / 28 |
+
+Caps compose as a **minimum**, so the six repos that miss `F-3` land at `1/5` whatever else they
+pass: TraceCase, Wrench Board, MealPrep, thinking, Medkit, Rehearsal.
+
+### The two zeroes are the finding, and they are not passes
+
+**Value and Usability cap nobody because none of their blocking tasks ran.** Every one needs
+published criteria, a container, or a naive operator, and a clone supplies none of the three — so
+each returns `UNEVALUABLE`, which is a fact about the instrument. A reader who takes `0 / 28
+capped` as *28 clean projects* has invented a score the run never produced. The same caveat
+applies to the 11 Feasibility repos with no cap: `F-6`, `F-7`, `F-8` and `F-2b` did not run there
+either, so *uncapped* means *nothing we could measure caps it*, never *it passed*.
+
+Two of the six `F-3` caps are the starter-repo fault already recorded above, not the projects':
+MealPrep and Rehearsal cap at `1/5` because this run passes no `starter_sha`. Supplying the
+organizers' sha `857113ee` clears both. **The caps inherit every fault the tasks have** — making
+them machine-readable made them consistent, not correct.
+
+### What the caps changed about the headline
+
+Nothing about the projects, and one thing about how the earlier number should be read. **0 of 28
+pass all eight measured tasks** stays true. But only **17 of 28** are *penalised* by that, because
+`F-2a`, `F-11`, `F-12` and `F-9` are advisory — a winner can miss all four and take no cap at all.
+The gap between those two numbers is the distance between *the contracts flag everyone* and *the
+contracts punish most people*.
+
 ## What this does NOT establish
 
 **28 winners, 0 losers.** The set is selected on the outcome, so no shared trait here is evidence

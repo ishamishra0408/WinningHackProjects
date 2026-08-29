@@ -1,0 +1,10 @@
+# UI only. api/ and builder/ stay standard-library, so the contracts, the gate
+# generator and both endpoints still run with nothing installed -- the F-7 and
+# F-10 properties they demand of everyone else.
+#
+# Pinned exactly, not a range. This file does NOT carry hashes, so it does not
+# satisfy `pip install --require-hashes` and would fail F-10 if this repo were
+# audited by its own contracts. Recorded rather than hidden; run
+#   pip-compile --generate-hashes ui/requirements.txt
+# to close it.
+streamlit==1.62.0

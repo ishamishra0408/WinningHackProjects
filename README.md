@@ -18,7 +18,7 @@ The repo answers five questions in order. Each layer feeds the next.
 | **Measurement** | How good was it *really*, on Value / Usability / Feasibility? | [scopes/](scopes/) + [evaluator/](evaluator/) |
 | **Design** | Given a *new* event, what do we build, and will it clear that bar? | [designer/](designer/README.md) |
 | **Construction** | How do I build something that passes all three? | [builder/](builder/) |
-| **Service** | Answer both, over HTTP | [api/](api/README.md) |
+| **Service** | Answer both — over HTTP, or in a browser | [api/](api/README.md) + [ui/](ui/README.md) |
 
 ## Layout
 
@@ -31,6 +31,7 @@ The repo answers five questions in order. Each layer feeds the next.
 | [evaluator/](evaluator/README.md) | Merged run order, caps, and a [scorecard template](evaluator/scorecard-TEMPLATE.md) for auditing any won project. Results land in [evaluator/audits/](evaluator/audits/). Alongside it, a [deep-dive template](evaluator/deep-dive-TEMPLATE.md) — the scorecard measures, the deep-dive explains. |
 | [designer/](designer/README.md) | The 19 checks that run at t=0, before any code exists — each buys a specific audit task you would otherwise find out about too late. Plus a [design card](designer/design-card-TEMPLATE.md), filled per idea into [designer/cards/](designer/cards/). |
 | [api/](api/README.md) | Two endpoints over the layers: `POST /evaluateproject` audits a repo that exists, `POST /evaluatespec` returns the ordered work to make a plan clear the bar. Stdlib only, thresholds read from the contracts at call time. |
+| [ui/](ui/README.md) | A Streamlit front end over the same two calls: pick **evaluate a project** or **evaluate a spec**, get every metric with its value *and* its reason. It renders only — no threshold, cap or weight is restated there. |
 | [builder/](builder/README.md) | The contracts inverted into a build spec, plus the [pre-submit gate](builder/pre-submit-gate.md) — whose checkbox lines are generated from the contracts by [generate-gate.py](builder/generate-gate.py), so a threshold has one home. |
 | [requirements.md](requirements.md) | Functional + non-functional requirements, improved by three advisor passes (metric-design, qe-ic, ds-ic) plus an Ousterhout module review; includes the scoring function and the `w_value` tradeoff math. |
 
@@ -159,6 +160,14 @@ behind both diagrams live in [requirements.md](requirements.md).
 - Winner audits: **28 repos across 10 events**, harvested from the galleries' embedded
   `ItemList` — 1,060 of 1,092 projects carry a repo link. **0 of 28 pass all eight measured tasks.**
 - API: two endpoints, stdlib only, thresholds read from the contracts at call time.
+- UI: Streamlit, both modes, one dependency. The spec mode's yes/no rows are **ticked by
+  the operator**, not inferred from the plan's prose — a keyword scan cannot read a
+  negation, so it pre-ticks and nothing more.
+- Cap re-run: the 28 winners re-audited under the machine-readable caps — **Feasibility
+  capped on 17 of 28, Value and Usability on 0**, the two zeroes only because none of
+  their blocking tasks can run from a clone. Recorded in
+  [research/winner-audits.md](research/winner-audits.md), reproducible with
+  `research/rerun-winners.py`.
 - Scorecards filled in `evaluator/audits/`: **none yet** — the 28-repo pass above ran the
   computable tasks only, and is recorded in research/, not as scorecards.
 
