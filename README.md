@@ -26,6 +26,7 @@ The repo answers three questions in order. Each layer feeds the next.
 | [research/winners-top3.md](research/winners-top3.md) | Top 3 winners for every event, what each built, and a link. |
 | [scopes/](scopes/README.md) | The three audit contracts, verbatim: [value](scopes/value.md), [usability](scopes/usability.md), [feasibility](scopes/feasibility.md). |
 | [evaluator/](evaluator/README.md) | Merged run order, caps, and a [scorecard template](evaluator/scorecard-TEMPLATE.md) for auditing any won project. Results land in [evaluator/audits/](evaluator/audits/). |
+| [evaluator/enforcement-tiers.md](evaluator/enforcement-tiers.md) | Every threshold graded `(rung, precision, who may stop)`. Which bars have earned the right to block, and which have not. |
 | [builder/](builder/README.md) | The contracts inverted into a build spec, plus the [pre-submit gate](builder/pre-submit-gate.md). |
 | [winner-deep-dives/](winner-deep-dives/deep-dive-TEMPLATE.md) | Narrative deep-dives — demo shape, transferable moves. Complements the scorecard rather than replacing it: the scorecard measures, this one explains. |
 
