@@ -42,11 +42,6 @@ lowest cap any failure triggered.
 | **Usability** | payoff unreachable without the author | `U-6` README blocks don't execute as written | `U-5` <3/3 environments · `U-3` >0 undocumented steps · `U-2` >10 min |
 | **Feasibility** | `F-2b` <80% in window, or `F-2a`/`F-2b` disagree, or `F-2c` drift ≥1h on >10% of commits, or unrostered author, or `F-3` opening commit ≥50% of final LOC | clean build / lockfile / `F-6` comprehension fails | one-dump cadence or CI absent |
 
-Caps say *how much* a failure costs. They do not say what mechanically stops it or who is
-allowed to act — that is [enforcement-tiers.md](enforcement-tiers.md), which grades every
-threshold as `(rung, precision, who may stop)` and finds the contracts' claimed tier A
-unevidenced.
-
 `V-1`, `U-1` or `F-1` missing does not cap — it makes that scope **unscorable**. Record it as
 unscorable; do not substitute a low score, which reads as "measured and bad" rather than
 "never measured".
