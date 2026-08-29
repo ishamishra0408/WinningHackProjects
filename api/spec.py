@@ -10,33 +10,45 @@ that reads well is not a prediction that the project will pass an audit.
 
 from __future__ import annotations
 
-import re
-
 # The 19 checks, in the order designer/README.md runs them. Each names the
 # ex-post task it buys, so a weak row points at what it will cost later.
 # STRONG = mechanical from the event page and the plan. WEAK = a declaration
 # you make now and cannot verify until later; reported, never scored.
-ROWS = [
-    ("D1",  1, "STRONG", "criteria_found",        "V-1",        "count of published judging criteria"),
-    ("D13", 1, "STRONG", "roster_ok",             "F-1 F-4",    "window fixed, every contributor on the entrant roster"),
-    ("D5",  2, "STRONG", "payoff_sentence",       "U-1",        "the payoff in one sentence, observable without you"),
-    ("D10", 2, "STRONG", "claim_declared",        "V-8 V-9",    "the number you intend to claim, written before building"),
-    ("D14", 2, "STRONG", "start_in_window",       "F-2a F-2b",  "committed build start at or after window open"),
-    ("D15", 2, "STRONG", "prior_code_declared",   "F-3",        "LOC of starter or prior code you will import"),
-    ("D19", 2, "STRONG", "demo_slot",             "V-10",       "a slot for recording the demo, not the last hour"),
-    ("D2",  3, "STRONG", "criteria_covered",      "V-2",        "criteria your plan names a mechanism for"),
-    ("D3",  3, "STRONG", "prior_art",             "V-7",        "closest existing tools, plus a delta sentence"),
-    ("D6",  3, "STRONG", "scope_ratio",           "F-5 F-12",   "planned hours over (team size x event hours)"),
-    ("D4",  4, "STRONG", "real_call",             "V-3 V-4",    ">=1 authenticated external call the demo executes"),
-    ("D7",  4, "STRONG", "payoff_surface",        "U-9",        "the single screen the payoff appears on"),
-    ("D8",  4, "STRONG", "demo_modules",          "V-5",        ">=2 planned files on the demo path"),
-    ("D12", 4, "STRONG", "one_click_and_envs",    "U-4 U-5",    "one-click entry, and 3 DISTINCT environments named"),
-    ("D17", 4, "STRONG", "day1_infra",            "F-7 F-8 F-9 F-10", "Dockerfile, lockfile and CI in day-1 scope"),
-    ("D11", 5, "STRONG", "operators_reserved",    "U-2 U-12",   ">=2 naive operators reserved by name, unburned"),
-    ("D9",  6, "WEAK",   "stub_replacement",      "V-6",        "every demo-path stub has a replacement slot"),
-    ("D16", 6, "WEAK",   "read_rate",             "F-6",        "share of shipped code you will actually read"),
-    ("D18", 6, "WEAK",   "readme_alongside",      "U-3 U-6",    "README written alongside the build, not after"),
-]
+import pathlib
+import re
+
+ROOT = pathlib.Path(__file__).resolve().parent.parent
+
+# The 19 checks live in ONE home: designer/README.md's per-scope tables, parsed
+# here at import. They were duplicated in this file and drifted -- the README
+# claimed "14 of 19 STRONG" while its own rows counted 16. runners.py reads the
+# contracts the same way; this is the same rule applied to the design layer.
+STEP_OF = {"D1": 1, "D13": 1, "D5": 2, "D10": 2, "D14": 2, "D15": 2, "D19": 2,
+           "D2": 3, "D3": 3, "D6": 3, "D4": 4, "D7": 4, "D8": 4, "D12": 4, "D17": 4,
+           "D11": 5, "D9": 6, "D16": 6, "D18": 6}
+FIELD_OF = {"D1": "criteria_found", "D2": "criteria_covered", "D3": "prior_art",
+            "D4": "real_call", "D5": "payoff_sentence", "D6": "scope_ratio",
+            "D7": "payoff_surface", "D8": "demo_modules", "D9": "stub_replacement",
+            "D10": "claim_declared", "D11": "operators_reserved", "D12": "one_click_and_envs",
+            "D13": "roster_ok", "D14": "start_in_window", "D15": "prior_code_declared",
+            "D16": "read_rate", "D17": "day1_infra", "D18": "readme_alongside",
+            "D19": "demo_slot"}
+
+
+def _load_rows() -> list[tuple]:
+    text = (ROOT / "designer" / "README.md").read_text()
+    rows = []
+    for m in re.finditer(r"^\|\s*`(D\d+)`\s*\|\s*(.+?)\s*\|\s*(.+?)\s*\|\s*(STRONG|WEAK)\s*\|",
+                         text, re.M):
+        rid, desc, buys, strength = m.groups()
+        rows.append((rid, STEP_OF[rid], strength, FIELD_OF[rid],
+                     " ".join(re.findall(r"`([VUF]-\d+[abc]?)`", buys)),
+                     re.sub(r"\*\*|`", "", desc)))
+    return sorted(rows, key=lambda r: (r[1], list(STEP_OF).index(r[0])))
+
+
+ROWS = _load_rows()
+
 
 STEP_GATE = {
     1: "criteria ABSENT -> substitute the research fallback and record it; roster mismatch -> STOP, you cannot enter",

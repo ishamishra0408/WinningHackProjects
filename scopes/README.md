@@ -77,6 +77,21 @@ These constrain the order you must run tasks in, across scopes:
 
 See [../evaluator/README.md](../evaluator/README.md) for the merged run order that respects both.
 
+## The `Caps at` column, and one unresolved row
+
+Each task's `Caps at` cell is the **one home** for what its failure costs: `1/5`, `2/5`, `3/5`,
+`unscorable` (the task's absence makes the scope unmeasurable, it is not a low score), or `—` for
+non-blocking. [`generate-gate.py`](../builder/generate-gate.py) and
+[`api/runners.py`](../api/runners.py) both parse it, so the fact has one home and two readers.
+
+**`V-2` reads `uncapped`, and that is a defect on display rather than a value.** It is marked
+blocking in the source, but no execution-order gate in [value.md](value.md) ever names a cap for
+it. A block with no consequence is not a block. Until it is resolved the API returns
+`cap: "undeterminable"` for the whole Value scope — the state is inert nowhere.
+
+Two honest ways out, and **neither is for this repo to pick unilaterally**: give `V-2` a cap in
+value.md's step-5 gate, or demote it to `—` on the grounds that the source never gave it one.
+
 ## Weight provenance — read this before citing a total
 
 The **source contracts** stated Usability = 25 and Feasibility = 20 and never stated Value's

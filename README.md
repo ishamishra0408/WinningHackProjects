@@ -151,7 +151,7 @@ behind both diagrams live in [requirements.md](requirements.md).
 - Event table: 16 rows across 7 topics, all gallery URLs resolved.
 - Top-3 winners: pulled for 14 of 16 events. Two have no ranked winners to pull — Enterprise
   MCP (still open voting) and Agentic Orchestration (6 unranked finalists).
-- Contracts: **36 tasks, 21 blocking.** `V-10` (the demo artifact judges actually watch) added
+- Contracts: **36 tasks, 22 blocking.** `V-10` (the demo artifact judges actually watch) added
   after two external rubrics and one event confirmed the gap; `V-7` promoted to blocking; `V-9`
   demoted to advisory at 6/28 winner pass.
 - Design layer: 19 t=0 checks, 16 of them mechanical, covering 30 of 36 audit tasks. The

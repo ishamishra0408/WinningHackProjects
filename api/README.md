@@ -47,6 +47,12 @@ tasks that need them return `ABSENT`, not a guess.
 
 | State | Means | Example |
 |---|---|---|
+| `undeterminable` | a **blocking task declares no cap**, so no scope score can be derived — `V-2` today | resolve it in the contract |
+
+### Every task returns one of three states
+
+| State | Means | Example |
+|---|---|---|
 | `MEASURED` | the check ran | `F-2c` → `{"drift_violations": 0, "commits_total": 41, "within_1h_share": 1.0}` |
 | `ABSENT` | a fact about **the subject** | `F-4` → no entrant roster supplied |
 | `UNEVALUABLE` | a fact about **the instrument** | `V-3` → needs Docker |

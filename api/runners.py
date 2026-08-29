@@ -367,11 +367,16 @@ def summarise(tasks: dict) -> dict:
         # A blocking task we could not run leaves the cap a CEILING, not a score.
         unmeasured_blocking = sorted(t for t, v in rows.items()
                                      if v["blocking"] and v["state"] != MEASURED)
+        uncapped = sorted(t for t, v in rows.items() if v["blocking"] and v["cap"] is None)
+        # A task that blocks but declares no cap has no consequence, so no scope
+        # score can be derived while one exists. Surfacing it beats inventing a
+        # number for it, and beats letting it sit inert.
         out[scope] = {
-            "cap": "unscorable" if unscorable else (f"{numeric[0]}/5" if numeric else None),
+            "cap": ("undeterminable" if uncapped else
+                    "unscorable" if unscorable else
+                    (f"{numeric[0]}/5" if numeric else None)),
             "score_is_a_ceiling_because": unmeasured_blocking or None,
-            "uncapped_blocking_tasks": sorted(t for t, v in rows.items()
-                                              if v["blocking"] and v["cap"] is None),
+            "uncapped_blocking_tasks": uncapped or None,
             "measured": sum(1 for v in rows.values() if v["state"] == MEASURED),
             "absent": sum(1 for v in rows.values() if v["state"] == ABSENT),
             "unevaluable": sum(1 for v in rows.values() if v["state"] == UNEVALUABLE),

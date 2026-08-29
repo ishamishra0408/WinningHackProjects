@@ -91,6 +91,48 @@ def check_drift(tasks: dict[str, tuple[str, str, bool]]) -> list[str]:
     return findings
 
 
+# ---- derived counts ---------------------------------------------------------
+# Thresholds, weights and caps each got one home and a reader. The counts ABOUT
+# them did not, and drifted the same way: the README said "21 blocking" while
+# the contracts said 22. Prose cannot be templated without littering markers, so
+# these are CHECKED rather than generated -- the drift is caught, the wording
+# stays a human's.
+COUNT_CLAIMS = [
+    (r"(\d+) (?:audit )?tasks\b", "tasks"),
+    (r"(\d+) blocking\b", "blocking"),
+    (r"(\d+) of the (\d+) are ABSENT", "absent_of_total"),
+    (r"(\d+) of (\d+) audit tasks", "covered_of_total"),
+]
+
+
+def derived_counts(tasks: dict) -> dict[str, int]:
+    return {"tasks": len(tasks),
+            "blocking": sum(1 for t in tasks.values() if t[2])}
+
+
+def check_counts(tasks: dict) -> list[str]:
+    """Every count a markdown file claims about the contracts must match them."""
+    truth = derived_counts(tasks)
+    findings = []
+    for path in sorted(ROOT.rglob("*.md")):
+        rel = path.relative_to(ROOT).as_posix()
+        if ".git" in rel:
+            continue
+        text = path.read_text()
+        for m in re.finditer(r"(\d+) tasks?,?\s*\*{0,2}(\d+) blocking", text):
+            if (int(m.group(1)), int(m.group(2))) != (truth["tasks"], truth["blocking"]):
+                findings.append(f"{rel}: claims {m.group(1)} tasks / {m.group(2)} blocking, "
+                                f"contracts say {truth['tasks']} / {truth['blocking']}")
+        for m in re.finditer(r"\b(\d+) audit tasks\b", text):
+            if int(m.group(1)) != truth["tasks"]:
+                findings.append(f"{rel}: claims {m.group(1)} audit tasks, contracts say {truth['tasks']}")
+        for m in re.finditer(r"of the (\d+) are ABSENT|of (\d+) audit tasks|(\d+) tasks V-\*", text):
+            n = next((g for g in m.groups() if g), None)
+            if n and int(n) != truth["tasks"]:
+                findings.append(f"{rel}: '{m.group(0)}' but contracts have {truth['tasks']} tasks")
+    return findings
+
+
 def main() -> int:
     tasks = read_contracts()
     text = GATE.read_text()
@@ -119,13 +161,20 @@ def main() -> int:
     print(f"{GATE.relative_to(ROOT)}: {'rewritten' if changed else 'already current'} "
           f"({len(tasks)} tasks read from {len(CONTRACTS)} contracts)")
 
+    counts = check_counts(tasks)
+    if counts:
+        print("\ncounts that disagree with the contracts:", file=sys.stderr)
+        for c in counts:
+            print(f"  {c}", file=sys.stderr)
+        return 1
+
     drift = check_drift(tasks)
     if drift:
         print("\nthreshold values found outside their contract:", file=sys.stderr)
         for d in drift:
             print(f"  {d}", file=sys.stderr)
         return 1
-    print("no threshold value has a second home")
+    print("no threshold value has a second home; every claimed count matches the contracts")
     return 0
 
 
