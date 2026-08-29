@@ -18,7 +18,7 @@ The repo answers five questions in order. Each layer feeds the next.
 | **Measurement** | How good was it *really*, on Value / Usability / Feasibility? | [scopes/](scopes/) + [evaluator/](evaluator/) |
 | **Design** | Given a *new* event, what do we build, and will it clear that bar? | [designer/](designer/README.md) |
 | **Construction** | How do I build something that passes all three? | [builder/](builder/) |
-| **Service** | Answer both — over HTTP, or in a browser | [api/](api/README.md) + [ui/](ui/README.md) |
+| **Service** | Answer both — over HTTP, in a browser, or as a PDF | [api/](api/README.md) · [ui/](ui/README.md) · [report/](report/README.md) |
 
 ## Layout
 
@@ -32,6 +32,7 @@ The repo answers five questions in order. Each layer feeds the next.
 | [designer/](designer/README.md) | The 19 checks that run at t=0, before any code exists — each buys a specific audit task you would otherwise find out about too late. Plus a [design card](designer/design-card-TEMPLATE.md), filled per idea into [designer/cards/](designer/cards/). |
 | [api/](api/README.md) | Two endpoints over the layers: `POST /evaluateproject` audits a repo that exists, `POST /evaluatespec` returns the ordered work to make a plan clear the bar. Stdlib only, thresholds read from the contracts at call time. |
 | [ui/](ui/README.md) | A Streamlit front end over the same two calls: pick **evaluate a project** or **evaluate a spec**, get every metric with its value *and* its reason. It renders only — no threshold, cap or weight is restated there. |
+| [report/](report/README.md) | The same two answers as a printable PDF — verdict, every metric with its value and reason, and for a spec the **why not** and **why yes** rows. Takes the endpoint's own request body, so there is no second input format. |
 | [builder/](builder/README.md) | The contracts inverted into a build spec, plus the [pre-submit gate](builder/pre-submit-gate.md) — whose checkbox lines are generated from the contracts by [generate-gate.py](builder/generate-gate.py), so a threshold has one home. |
 | [requirements.md](requirements.md) | Functional + non-functional requirements, improved by three advisor passes (metric-design, qe-ic, ds-ic) plus an Ousterhout module review; includes the scoring function and the `w_value` tradeoff math. |
 
